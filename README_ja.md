@@ -102,42 +102,6 @@ docker run --rm \
 
 <http://localhost:3284> を開き、既定のパスワード `admin` でログインしてください。詳細は [Docker デプロイ](docs/DOCKER.md) を参照してください。
 
-## CLI 接続
-
-Key 管理画面でアクセスキーを作成し、MCP クライアントから次を実行します：
-
-```bash
-export MCPR_TOKEN="mcpr_your_token"
-npx -y @mcp_link/cli connect
-```
-
-PowerShell：
-
-```powershell
-$env:MCPR_TOKEN = "mcpr_your_token"
-npx -y @mcp_link/cli connect
-```
-
-## スクリーンショット
-
-### サーバー管理
-
-![サーバー管理](public/images/readme/toggle.png)
-
-![ツール権限](public/images/readme/tool-toggle.png)
-
-### MCP サーバーの追加
-
-![MCP サーバーの追加](public/images/readme/add-mcp-manual.png)
-
-### アクセスキー
-
-![アクセスキー](public/images/readme/token.png)
-
-### リクエストログ
-
-![リクエストログ](public/images/readme/stats.png)
-
 ## プライバシーとセキュリティ
 
 設定、認証情報、ログ、サーバーデータはローカルに保存されます。Server モードをネットワークへ公開する場合は、既定のパスワードを変更し、必要に応じてネットワークアクセスを制限してください。

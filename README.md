@@ -102,42 +102,6 @@ docker run --rm \
 
 Open <http://localhost:3284> and log in with the default password `admin`. See [Docker deployment](docs/DOCKER.md) for details.
 
-## CLI connection
-
-Create an access key on the Key Management page, then configure an MCP client to run:
-
-```bash
-export MCPR_TOKEN="mcpr_your_token"
-npx -y @mcp_link/cli connect
-```
-
-PowerShell:
-
-```powershell
-$env:MCPR_TOKEN = "mcpr_your_token"
-npx -y @mcp_link/cli connect
-```
-
-## Screenshots
-
-### Server management
-
-![Server management](public/images/readme/toggle.png)
-
-![Tool permissions](public/images/readme/tool-toggle.png)
-
-### Add an MCP server
-
-![Add an MCP server](public/images/readme/add-mcp-manual.png)
-
-### Access keys
-
-![Access keys](public/images/readme/token.png)
-
-### Request logs
-
-![Request logs](public/images/readme/stats.png)
-
 ## Privacy and security
 
 Configurations, credentials, logs, and server data are stored locally. When exposing Server mode to a network, change the default password and restrict network access as appropriate.

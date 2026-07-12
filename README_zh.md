@@ -102,42 +102,6 @@ docker run --rm \
 
 打开 <http://localhost:3284>，使用默认密码 `admin` 登录。更多说明见 [Docker 部署文档](docs/DOCKER.md)。
 
-## CLI 连接
-
-先在 Key 管理页面创建访问 Key，然后让 MCP 客户端运行：
-
-```bash
-export MCPR_TOKEN="mcpr_your_token"
-npx -y @mcp_link/cli connect
-```
-
-PowerShell：
-
-```powershell
-$env:MCPR_TOKEN = "mcpr_your_token"
-npx -y @mcp_link/cli connect
-```
-
-## 功能截图
-
-### 服务器管理
-
-![服务器管理](public/images/readme/toggle.png)
-
-![工具权限](public/images/readme/tool-toggle.png)
-
-### 添加 MCP 服务器
-
-![添加 MCP 服务器](public/images/readme/add-mcp-manual.png)
-
-### 访问 Key
-
-![访问 Key](public/images/readme/token.png)
-
-### 请求日志
-
-![请求日志](public/images/readme/stats.png)
-
 ## 隐私与安全
 
 配置、凭据、日志和服务器数据均保存在本地。将 Server 模式开放到局域网或公网时，请修改默认密码，并根据需要限制网络访问。
