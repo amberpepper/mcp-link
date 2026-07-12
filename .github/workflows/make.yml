@@ -117,7 +117,6 @@ jobs:
             args: ""
     env:
       CI: true
-      CARGO_TARGET_DIR: apps/desktop/src-tauri/target
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
