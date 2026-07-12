@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MCP Link",
+  "version": "1.0.0",
+  "identifier": "link.mcp.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @mcp_link/web dev",
+    "beforeBuildCommand": "pnpm --filter @mcp_link/web build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../../web/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MCP Link",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/amberpepper/mcp-link/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEMxNzZBRjdDQ0ZEMTg2OEIKUldTTGh0SFBmSzkyd1pJVU11ZnkwTWxXSUZWQjVQS2lVNGgxQ1dRVE1zbnhxd1ZKQ3J4WHdodUgK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "@mcp_link/cli",
+  "version": "0.2.1",
+  "description": "CLI for MCP Link - connect to an MCP HTTP server",
+  "main": "dist/mcpr.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "bin": {
+    "mcpr": "dist/mcpr.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "start": "node dist/mcpr.js",
+    "dev": "tsc --build && node dist/mcpr.js",
+    "clean": "rm -rf dist",
+    "test": "node --loader ts-node/esm --test tests/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "knip": "cd ../.. && knip --workspace apps/cli",
+    "prepublishOnly": "npm run build",
+    "publish:npm": "pnpm publish --access public"
+  },
+  "dependencies": {
+    "@mcp_link/shared": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "keywords": [
+    "mcp",
+    "cli",
+    "router",
+    "model-context-protocol"
+  ],
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amberpepper/mcp-link.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://github.com/amberpepper/mcp-link/tree/main/apps/cli#readme",
+  "bugs": {
+    "url": "https://github.com/amberpepper/mcp-link/issues"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@mcp_link/shared",
+  "version": "0.5.4",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build --force",
+    "dev": "tsc --watch",
+    "test": "pnpm run build && node --test tests/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "cd ../.. && knip --workspace packages/shared"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.16",
+    "typescript": "^5.9.2"
+  }
+}

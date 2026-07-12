@@ -1,0 +1,14 @@
+.git
+.turbo
+.DS_Store
+
+**/node_modules
+**/target
+**/dist
+
+*.log
+.env
+.env.*
+
+apps/web/dist
+apps/desktop/src-tauri/target

@@ -1,0 +1,314 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - release
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck and Knip
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      CARGO_TARGET_DIR: apps/desktop/src-tauri/target
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify release versions
+        shell: bash
+        run: |
+          root_version=$(node -p "require('./package.json').version")
+          tauri_version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          cargo_version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' apps/desktop/src-tauri/Cargo.toml | head -n 1)
+
+          if [[ "$root_version" != "$tauri_version" || "$root_version" != "$cargo_version" ]]; then
+            echo "Version mismatch: package.json=$root_version, tauri.conf.json=$tauri_version, Cargo.toml=$cargo_version"
+            exit 1
+          fi
+
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$root_version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match project version v$root_version"
+            exit 1
+          fi
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            rpm \
+            wget
+
+      - name: Build shared package
+        run: pnpm --filter @mcp_link/shared build
+
+      - name: Run typecheck
+        run: pnpm run typecheck
+
+      - name: Run Knip
+        run: pnpm run knip
+
+  desktop:
+    name: Desktop (${{ matrix.label }})
+    needs: checks
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macOS (Apple Silicon)
+            target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin
+          - os: macos-latest
+            label: macOS (Intel)
+            target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin
+          - os: windows-latest
+            label: Windows
+            target: x86_64-pc-windows-msvc
+            args: ""
+          - os: ubuntu-latest
+            label: Linux
+            target: x86_64-unknown-linux-gnu
+            args: ""
+    env:
+      CI: true
+      CARGO_TARGET_DIR: apps/desktop/src-tauri/target
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify updater signing secret
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          if [[ -z "$TAURI_SIGNING_PRIVATE_KEY" ]]; then
+            echo "Missing GitHub Actions secret: TAURI_SIGNING_PRIVATE_KEY"
+            exit 1
+          fi
+
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            rpm \
+            wget
+
+      - name: Build and publish desktop
+        uses: tauri-apps/tauri-action@v1
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          args: ${{ matrix.args }} ${{ startsWith(github.ref, 'refs/tags/v') && '--config src-tauri/tauri.updater.conf.json' || '' }}
+          tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('MCP Link {0}', github.ref_name) || '' }}
+          generateReleaseNotes: true
+          releaseDraft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          uploadUpdaterSignatures: true
+          uploadWorkflowArtifacts: true
+          workflowArtifactNamePattern: desktop-[platform]-[arch]-[bundle]
+          releaseAssetNamePattern: mcp-link_[version]_[platform]_[arch][setup][ext]
+
+  server:
+    name: Server (${{ matrix.label }})
+    needs: checks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macOS
+            slug: macos
+            binary: mcp-link-server
+          - os: windows-latest
+            label: Windows
+            slug: windows-x64
+            binary: mcp-link-server.exe
+          - os: ubuntu-latest
+            label: Linux
+            slug: linux-x64
+            binary: mcp-link-server
+    env:
+      CI: true
+      CARGO_TARGET_DIR: apps/desktop/src-tauri/target
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build server
+        run: pnpm run build:server
+
+      - name: Package server (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release-assets/package | Out-Null
+          Copy-Item apps/desktop/src-tauri/target/release/${{ matrix.binary }} release-assets/package/${{ matrix.binary }}
+          Compress-Archive -Path release-assets/package/* -DestinationPath release-assets/mcp-link-server-${{ matrix.slug }}.zip
+          Remove-Item -Recurse -Force release-assets/package
+          $hash = (Get-FileHash release-assets/mcp-link-server-${{ matrix.slug }}.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  mcp-link-server-${{ matrix.slug }}.zip" | Set-Content -NoNewline release-assets/mcp-link-server-${{ matrix.slug }}.zip.sha256
+
+      - name: Package server (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release-assets/package
+          cp "apps/desktop/src-tauri/target/release/${{ matrix.binary }}" release-assets/package/
+          tar -czf "release-assets/mcp-link-server-${{ matrix.slug }}.tar.gz" \
+            -C release-assets/package "${{ matrix.binary }}"
+          rm -rf release-assets/package
+          cd release-assets
+          shasum -a 256 "mcp-link-server-${{ matrix.slug }}.tar.gz" > \
+            "mcp-link-server-${{ matrix.slug }}.tar.gz.sha256"
+
+      - name: Upload server binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-${{ matrix.label }}
+          path: apps/desktop/src-tauri/target/release/${{ matrix.binary }}
+          if-no-files-found: error
+
+      - name: Upload server release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-server-${{ matrix.label }}
+          path: release-assets
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - desktop
+      - server
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-server-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: MCP Link ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: release-assets/*

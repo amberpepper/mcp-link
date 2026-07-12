@@ -1,0 +1,50 @@
+{
+  "name": "@mcp_link/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 1420",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 1420",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@codemirror/view": "^6.38.8",
+    "@mcp_link/shared": "workspace:*",
+    "@mcp_link/tailwind-config": "workspace:*",
+    "@mcp_link/ui": "workspace:*",
+    "@tabler/icons-react": "^3.35.0",
+    "@tauri-apps/api": "2.9.0",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
+    "@uiw/react-codemirror": "^4.25.3",
+    "clsx": "^2.1.1",
+    "i18next": "^24.2.3",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "immer": "^10.2.0",
+    "lucide-react": "^0.487.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-i18next": "^15.7.4",
+    "react-router-dom": "^7.9.6",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^2.6.0",
+    "uuid": "^11.1.1",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^6.0.3",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "vite": "^8.1.3"
+  }
+}

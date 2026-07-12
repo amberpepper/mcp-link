@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["*.config.{js,ts,mjs}", "tools/*.mjs"],
+      "project": ["*.{js,ts,mjs}", "tools/**/*.{js,ts,mjs}"]
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/cli": {
+      "entry": ["src/mcp-aggregator.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/shared": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/ui": {
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/tailwind-config": {
+      "entry": ["*.config.js"],
+      "project": ["*.js"]
+    }
+  }
+}

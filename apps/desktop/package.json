@@ -1,0 +1,18 @@
+{
+  "name": "@mcp_link/desktop",
+  "productName": "MCP Link",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm dev:desktop",
+    "dev:desktop": "tauri dev",
+    "build": "pnpm build:desktop",
+    "build:desktop": "tauri build",
+    "tauri": "tauri",
+    "typecheck": "cargo check --manifest-path src-tauri/Cargo.toml"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4"
+  }
+}

@@ -1,0 +1,81 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-and-knip:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      CARGO_TARGET_DIR: apps/desktop/src-tauri/target
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify version consistency
+        shell: bash
+        run: |
+          root_version=$(node -p "require('./package.json').version")
+          tauri_version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          cargo_version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' apps/desktop/src-tauri/Cargo.toml | head -n 1)
+
+          if [[ "$root_version" != "$tauri_version" || "$root_version" != "$cargo_version" ]]; then
+            echo "Version mismatch: package.json=$root_version, tauri.conf.json=$tauri_version, Cargo.toml=$cargo_version"
+            exit 1
+          fi
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            rpm \
+            wget
+
+      - name: Build shared package
+        run: pnpm --filter @mcp_link/shared build
+
+      - name: Run typecheck
+        run: pnpm run typecheck
+
+      - name: Run Knip
+        run: pnpm run knip

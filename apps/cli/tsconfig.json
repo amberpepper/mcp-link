@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@mcp_link/shared": ["../../packages/shared/src/index.ts"],
+      "@mcp_link/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "ts-node": {
+    "esm": true,
+    "transpileOnly": true
+  },
+  "references": [{ "path": "../../packages/shared" }],
+  "include": ["src"]
+}

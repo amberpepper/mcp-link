@@ -1,0 +1,56 @@
+# @mcp_link/cli
+
+Command-line interface for the MCP Link - connect to a running MCP HTTP server via the command line.
+
+## Are you new here?
+
+If you're new to MCP Link:
+
+1. First, download and install MCP Link from [GitHub Releases](https://github.com/amberpepper/mcp-link/releases)
+2. Start the MCP Link application and ensure it's running properly
+3. Then, usually this cli is installed as part of the MCP Link installation, but if you want to install it separately, you can do so using npm
+
+## Usage
+
+### Connect Command (Stdio → HTTP)
+
+The `connect` command creates a bridge from stdio to HTTP, allowing stdio-based MCP clients to connect to an HTTP MCP server:
+
+```bash
+export MCPR_TOKEN=your_access_token
+# Connect to a local MCP Link
+npx @mcp_link/cli connect
+
+# Connect to a custom server (supports http/https and custom paths)
+npx @mcp_link/cli connect --url https://example.com:8080/mcp
+
+# Display help
+npx @mcp_link/cli --help
+```
+
+The `--url` flag accepts a full URL (including http/https, port, and optional path). If no path is provided, `/mcp` is assumed.
+
+### Serve Command (HTTP → Stdio)
+
+The `serve` command creates an HTTP server that forwards requests to a stdio-based MCP server:
+
+```bash
+# Start a local-only HTTP server on default port 3283 that forwards to a stdio MCP server
+npx @mcp_link/cli serve npx @modelcontextprotocol/server-filesystem /path/to/dir
+
+# Use a custom port
+npx @mcp_link/cli serve --port 8080 python my-mcp-server.py
+
+# Listen on a network interface. A token is required for non-localhost hosts.
+npx @mcp_link/cli serve --host 0.0.0.0 --token secret123 python my-mcp-server.py
+
+# Enable authentication with a Bearer token
+npx @mcp_link/cli serve --token secret123 python my-mcp-server.py
+
+# Pass arguments to the MCP server
+npx @mcp_link/cli serve -- node my-server.js --config config.json
+```
+
+By default, `serve` listens on `127.0.0.1` only. To expose it to other machines, pass `--host` with a network interface and provide `--token`.
+
+This is useful when you have a stdio-based MCP server that you want to expose via HTTP.
