@@ -5,13 +5,11 @@ on:
     branches:
       - main
       - release
-    tags:
-      - "v*"
   workflow_dispatch:
 
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -23,6 +21,7 @@ jobs:
     outputs:
       should_release: ${{ steps.release.outputs.should_release }}
       tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -32,22 +31,38 @@ jobs:
         id: release
         shell: bash
         run: |
-          version=$(node -p "require('./package.json').version")
-          tag="v$version"
+          base_version=$(node -p "require('./package.json').version")
+          if [[ ! "$base_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Automatic releases require a numeric major.minor.patch version, got: $base_version"
+            exit 1
+          fi
+
+          major="${BASH_REMATCH[1]}"
+          minor="${BASH_REMATCH[2]}"
+          base_patch="${BASH_REMATCH[3]}"
+          version="$base_version"
           should_release=false
 
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            if [[ "$GITHUB_REF_NAME" != "$tag" ]]; then
-              echo "Tag $GITHUB_REF_NAME does not match project version $tag"
-              exit 1
+          if [[ "$GITHUB_REF_NAME" == "main" ]]; then
+            latest_patch=$(git ls-remote --refs --tags origin "refs/tags/v${major}.${minor}.*" \
+              | while read -r _ ref; do
+                  patch="${ref##*.}"
+                  if [[ "$patch" =~ ^[0-9]+$ ]]; then
+                    echo "$patch"
+                  fi
+                done \
+              | sort -n \
+              | tail -n 1)
+
+            if [[ -n "$latest_patch" && "$latest_patch" -ge "$base_patch" ]]; then
+              version="${major}.${minor}.$((latest_patch + 1))"
             fi
-            should_release=true
-          elif [[ "$GITHUB_REF_NAME" == "main" ]] && \
-            ! git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
             should_release=true
           fi
 
+          tag="v$version"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
 
   checks:
@@ -82,11 +97,6 @@ jobs:
 
           if [[ "$root_version" != "$tauri_version" || "$root_version" != "$cargo_version" ]]; then
             echo "Version mismatch: package.json=$root_version, tauri.conf.json=$tauri_version, Cargo.toml=$cargo_version"
-            exit 1
-          fi
-
-          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$root_version" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match project version v$root_version"
             exit 1
           fi
 
@@ -207,12 +217,20 @@ jobs:
             rpm \
             wget
 
+      - name: Apply automatic release version
+        if: needs.release_info.outputs.should_release == 'true'
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.release_info.outputs.version }}
+        run: |
+          node -e "const fs=require('fs'); const cargo='apps/desktop/src-tauri/Cargo.toml'; fs.writeFileSync(cargo, fs.readFileSync(cargo, 'utf8').replace(/^version = \"[^\"]+\"/m, 'version = \"' + process.env.RELEASE_VERSION + '\"')); fs.writeFileSync('apps/desktop/src-tauri/tauri.release.conf.json', JSON.stringify({ version: process.env.RELEASE_VERSION, bundle: { createUpdaterArtifacts: true } }))"
+
       - name: Build and publish desktop
         uses: tauri-apps/tauri-action@v1
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
-          args: ${{ matrix.args }} ${{ needs.release_info.outputs.should_release == 'true' && '--config src-tauri/tauri.updater.conf.json' || '' }}
+          args: ${{ matrix.args }} ${{ needs.release_info.outputs.should_release == 'true' && '--config src-tauri/tauri.release.conf.json' || '' }}
           tagName: ${{ needs.release_info.outputs.should_release == 'true' && needs.release_info.outputs.tag || '' }}
           releaseName: ${{ needs.release_info.outputs.should_release == 'true' && format('MCP Link {0}', needs.release_info.outputs.tag) || '' }}
           generateReleaseNotes: true
@@ -227,7 +245,9 @@ jobs:
 
   server:
     name: Server (${{ matrix.label }})
-    needs: checks
+    needs:
+      - release_info
+      - checks
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -272,6 +292,14 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Apply automatic release version
+        if: needs.release_info.outputs.should_release == 'true'
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.release_info.outputs.version }}
+        run: |
+          node -e "const fs=require('fs'); const cargo='apps/desktop/src-tauri/Cargo.toml'; fs.writeFileSync(cargo, fs.readFileSync(cargo, 'utf8').replace(/^version = \"[^\"]+\"/m, 'version = \"' + process.env.RELEASE_VERSION + '\"'))"
 
       - name: Build server
         run: pnpm run build:server
