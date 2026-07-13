@@ -27,6 +27,8 @@ import { ServerErrorModal } from "@/renderer/components/common/ServerErrorModal"
 import { showServerError } from "@/renderer/components/common";
 import PageLayout from "@/renderer/components/layout/PageLayout";
 import ServerListView from "@/renderer/components/mcp/server/ServerListView";
+import { localPlatformAPI as platformAPI } from "@/renderer/platform-api/runtime-platform-api";
+import { isTauriRuntime } from "@/renderer/platform-api/tauri-platform-api";
 import { useServerStore, useViewPreferencesStore } from "@/renderer/stores";
 import { cn } from "@/renderer/utils/tailwind-utils";
 
@@ -115,21 +117,28 @@ const Home: React.FC = () => {
     const mcpServers = Object.fromEntries(
       items.map((server) => [server.name, toExportConfig(server)]),
     );
-
-    const didDownload = downloadJson(
-      { mcpServers },
-      `${safeFilename(filePrefix)}-${new Date().toISOString().split("T")[0]}.json`,
-    );
-
-    if (didDownload) {
-      toast.success(t("serverList.exportSuccess"));
-      return;
-    }
+    const content = JSON.stringify({ mcpServers }, null, 2);
+    const filename = `${safeFilename(filePrefix)}-${new Date().toISOString().split("T")[0]}.json`;
 
     try {
-      await navigator.clipboard.writeText(
-        JSON.stringify({ mcpServers }, null, 2),
-      );
+      if (isTauriRuntime()) {
+        const saved = await platformAPI.settings.exportMcpConfig(
+          filename,
+          content,
+        );
+        if (saved) {
+          toast.success(t("serverList.exportSuccess", { filename }));
+        }
+        return;
+      }
+
+      const didDownload = downloadJson({ mcpServers }, filename);
+      if (didDownload) {
+        toast.success(t("serverList.exportSuccess", { filename }));
+        return;
+      }
+
+      await navigator.clipboard.writeText(content);
       toast.success(t("serverList.exportCopied"));
     } catch (error) {
       console.error("Failed to export server config:", error);

@@ -80,7 +80,7 @@
     "export": "导出",
     "exportAll": "导出全部",
     "exportConfig": "导出配置",
-    "exportSuccess": "配置已导出",
+    "exportSuccess": "配置已导出：{{filename}}",
     "exportCopied": "下载不可用，配置已复制到剪贴板",
     "exportFailed": "导出配置失败",
     "duplicate": "复制",

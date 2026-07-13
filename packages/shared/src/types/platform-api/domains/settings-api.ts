@@ -15,6 +15,7 @@ export interface NetworkInterfaceAddress {
 export interface SettingsAPI {
   get(): Promise<AppSettings>;
   save(settings: AppSettings): Promise<boolean>;
+  exportMcpConfig(fileName: string, content: string): Promise<boolean>;
   listNetworkInterfaces(): Promise<NetworkInterfaceAddress[]>;
   restartDesktopMcpEndpoint(): Promise<boolean>;
 }

@@ -12,7 +12,11 @@ use serde_json::{json, Value};
 #[cfg(feature = "desktop")]
 use std::sync::Arc;
 #[cfg(feature = "desktop")]
+use tauri::Manager;
+#[cfg(feature = "desktop")]
 use tauri_plugin_autostart::ManagerExt;
+#[cfg(feature = "desktop")]
+use tauri_plugin_dialog::DialogExt;
 
 use crate::access_keys::{
     generate_access_key, list_access_keys, revoke_access_key, update_access_key_server_access,
@@ -67,6 +71,25 @@ pub(crate) async fn platform_call(
 
     if method == "restartDesktopMcpEndpoint" {
         start_desktop_mcp_http_server(state.inner().clone());
+        return Ok(Value::Bool(true));
+    }
+
+    if method == "exportMcpConfig" {
+        let file_name = required_string(&args, 0)?;
+        let content = required_string(&args, 1)?;
+        let mut dialog = app
+            .dialog()
+            .file()
+            .set_file_name(file_name)
+            .add_filter("JSON", &["json"]);
+        if let Ok(download_dir) = app.path().download_dir() {
+            dialog = dialog.set_directory(download_dir);
+        }
+        let Some(file_path) = dialog.blocking_save_file() else {
+            return Ok(Value::Bool(false));
+        };
+        let path = file_path.into_path().map_err(|error| error.to_string())?;
+        std::fs::write(path, content).map_err(|error| error.to_string())?;
         return Ok(Value::Bool(true));
     }
 

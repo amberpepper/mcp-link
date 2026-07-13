@@ -48,6 +48,8 @@ export function createPlatformAPI(callPlatform: PlatformCall): PlatformAPI {
   const settings: SettingsAPI = {
     get: () => callPlatform("getSettings"),
     save: (settings) => callPlatform("saveSettings", [settings]),
+    exportMcpConfig: (fileName, content) =>
+      callPlatform("exportMcpConfig", [fileName, content]),
     listNetworkInterfaces: () => callPlatform("listNetworkInterfaces"),
     restartDesktopMcpEndpoint: () => callPlatform("restartDesktopMcpEndpoint"),
   };

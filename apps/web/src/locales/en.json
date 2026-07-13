@@ -80,7 +80,7 @@
     "export": "Export",
     "exportAll": "Export all",
     "exportConfig": "Export config",
-    "exportSuccess": "Config exported",
+    "exportSuccess": "Config exported: {{filename}}",
     "exportCopied": "Download unavailable. Config copied to clipboard",
     "exportFailed": "Failed to export config",
     "duplicate": "Duplicate",

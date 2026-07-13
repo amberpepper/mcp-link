@@ -23,10 +23,10 @@ const AddServerPage: React.FC = () => {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const requestedTab = params.get("tab");
-  const tab = requestedTab === "manual" ? "manual" : "registry";
+  const tab = requestedTab === "registry" ? "registry" : "manual";
 
   const setTab = (value: string) => {
-    setParams(value === "registry" ? {} : { tab: value });
+    setParams(value === "manual" ? {} : { tab: value });
   };
 
   return (
@@ -47,20 +47,20 @@ const AddServerPage: React.FC = () => {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="registry">
-            <Compass className="h-4 w-4" />
-            {t("registry.title")}
-          </TabsTrigger>
           <TabsTrigger value="manual">
             <PencilLine className="h-4 w-4" />
             {t("manual.createManually")}
           </TabsTrigger>
+          <TabsTrigger value="registry">
+            <Compass className="h-4 w-4" />
+            {t("registry.title")}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="registry" className="mt-4">
-          <RegistryMarket />
-        </TabsContent>
         <TabsContent value="manual" className="mt-4">
           <Manual />
+        </TabsContent>
+        <TabsContent value="registry" className="mt-4">
+          <RegistryMarket />
         </TabsContent>
       </Tabs>
     </PageLayout>

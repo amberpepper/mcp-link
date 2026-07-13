@@ -80,7 +80,7 @@
     "export": "エクスポート",
     "exportAll": "すべてエクスポート",
     "exportConfig": "設定をエクスポート",
-    "exportSuccess": "設定をエクスポートしました",
+    "exportSuccess": "設定をエクスポートしました：{{filename}}",
     "exportCopied": "ダウンロードできないため、設定をクリップボードにコピーしました",
     "exportFailed": "設定のエクスポートに失敗しました",
     "duplicate": "複製",
