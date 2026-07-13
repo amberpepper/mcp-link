@@ -25,7 +25,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import type { NetworkInterfaceAddress } from "@mcp_link/shared";
+import type { CloseBehavior, NetworkInterfaceAddress } from "@mcp_link/shared";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ const Settings: React.FC = () => {
     useState<boolean>(false);
   const [showWindowOnStartup, setShowWindowOnStartup] =
     useState<boolean>(false);
+  const [closeBehavior, setCloseBehavior] = useState<CloseBehavior>("exit");
   const [skillAgentPaths, setSkillAgentPaths] = useState<string[]>([]);
   const [newSkillAgentPath, setNewSkillAgentPath] = useState("");
   const [networkInterfaces, setNetworkInterfaces] = useState<
@@ -180,6 +181,7 @@ const Settings: React.FC = () => {
         ]);
         setLoadExternalMCPConfigs(settings.loadExternalMCPConfigs ?? false);
         setShowWindowOnStartup(settings.showWindowOnStartup ?? false);
+        setCloseBehavior(settings.closeBehavior ?? "exit");
         setSkillAgentPaths(settings.skillAgentPaths ?? []);
         setDesktopMcpListenHost(settings.desktopMcpListenHost ?? "127.0.0.1");
         setDesktopMcpListenPort(String(settings.desktopMcpListenPort ?? 3284));
@@ -229,6 +231,25 @@ const Settings: React.FC = () => {
     } catch (error) {
       console.error("Failed to save startup visibility settings:", error);
       setShowWindowOnStartup(!checked);
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleCloseBehaviorChange = async (value: string) => {
+    const nextBehavior = value as CloseBehavior;
+    const previousBehavior = closeBehavior;
+    setCloseBehavior(nextBehavior);
+    setIsSavingSettings(true);
+    try {
+      const currentSettings = await platformAPI.settings.get();
+      await platformAPI.settings.save({
+        ...currentSettings,
+        closeBehavior: nextBehavior,
+      });
+    } catch (error) {
+      console.error("Failed to save close behavior:", error);
+      setCloseBehavior(previousBehavior);
     } finally {
       setIsSavingSettings(false);
     }
@@ -406,6 +427,29 @@ const Settings: React.FC = () => {
               onCheckedChange={handleStartupVisibilityToggle}
               disabled={isSavingSettings}
             />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <label className="text-sm font-medium">
+              {t("settings.closeBehavior")}
+            </label>
+            <Select
+              value={closeBehavior}
+              onValueChange={handleCloseBehaviorChange}
+              disabled={isSavingSettings}
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="exit">
+                  {t("settings.closeBehaviorExit")}
+                </SelectItem>
+                <SelectItem value="minimizeToTray">
+                  {t("settings.closeBehaviorTray")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Load External MCP Configs */}

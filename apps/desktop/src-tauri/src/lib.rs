@@ -13,6 +13,10 @@ mod workflow;
 #[cfg(feature = "desktop")]
 use std::sync::Arc;
 #[cfg(feature = "desktop")]
+use tauri::menu::{Menu, MenuItem};
+#[cfg(feature = "desktop")]
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+#[cfg(feature = "desktop")]
 use tauri::Manager;
 #[cfg(feature = "desktop")]
 use tauri_plugin_autostart::ManagerExt;
@@ -65,6 +69,34 @@ pub fn run_desktop() {
                 eprintln!("Failed to synchronize app autostart setting: {error}");
             }
             app.manage(state.clone());
+
+            let open_item = MenuItem::with_id(app, "open", "打开 MCP Link", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+            let tray_menu = Menu::with_items(app, &[&open_item, &quit_item])?;
+            let mut tray = TrayIconBuilder::with_id("main")
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)
+                .tooltip("MCP Link");
+            if let Some(icon) = app.default_window_icon() {
+                tray = tray.icon(icon.clone());
+            }
+            tray.on_menu_event(|app, event| match event.id().as_ref() {
+                "open" => show_main_window(app),
+                "quit" => app.exit(0),
+                _ => {}
+            })
+            .on_tray_icon_event(|tray, event| {
+                if let TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                } = event
+                {
+                    show_main_window(tray.app_handle());
+                }
+            })
+            .build(app)?;
+
             start_desktop_mcp_http_server(state.clone());
             tauri::async_runtime::spawn(async move {
                 let load_external = state
@@ -88,10 +120,40 @@ pub fn run_desktop() {
             });
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let minimize_to_tray = window
+                    .state::<Arc<DesktopState>>()
+                    .store
+                    .lock()
+                    .ok()
+                    .and_then(|store| {
+                        store
+                            .settings
+                            .get("closeBehavior")
+                            .and_then(serde_json::Value::as_str)
+                            .map(|behavior| behavior == "minimizeToTray")
+                    })
+                    .unwrap_or(false);
+                if minimize_to_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![platform_call])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_, _| {});
+}
+
+#[cfg(feature = "desktop")]
+fn show_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
 }
 
 #[cfg(not(feature = "desktop"))]
