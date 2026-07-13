@@ -417,18 +417,6 @@ const Settings: React.FC = () => {
             </Select>
           </div>
 
-          {/* Show Window on Startup */}
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">
-              {t("settings.showWindowOnStartup")}
-            </label>
-            <Switch
-              checked={showWindowOnStartup}
-              onCheckedChange={handleStartupVisibilityToggle}
-              disabled={isSavingSettings}
-            />
-          </div>
-
           <div className="flex items-center justify-between gap-4">
             <label className="text-sm font-medium">
               {t("settings.closeBehavior")}
@@ -450,6 +438,18 @@ const Settings: React.FC = () => {
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Show Window on Startup */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">
+              {t("settings.showWindowOnStartup")}
+            </label>
+            <Switch
+              checked={showWindowOnStartup}
+              onCheckedChange={handleStartupVisibilityToggle}
+              disabled={isSavingSettings}
+            />
           </div>
 
           {/* Load External MCP Configs */}

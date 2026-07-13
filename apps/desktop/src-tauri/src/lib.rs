@@ -47,7 +47,9 @@ pub fn run_desktop() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
-            let state = Arc::new(DesktopState::load(executable_db_path()));
+            let data_dir = app.path().local_data_dir()?.join("MCP Link");
+            std::fs::create_dir_all(&data_dir)?;
+            let state = Arc::new(DesktopState::load(data_dir.join("mcp.db")));
             let auto_start_app = state
                 .store
                 .lock()
@@ -209,6 +211,7 @@ pub fn run_server() {
     });
 }
 
+#[cfg(feature = "server")]
 fn executable_db_path() -> std::path::PathBuf {
     let dir = std::env::current_exe()
         .ok()
