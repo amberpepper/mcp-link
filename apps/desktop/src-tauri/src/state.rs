@@ -107,8 +107,8 @@ pub(crate) fn create_default_state() -> StoreState {
     StoreState {
         servers: vec![],
         settings: Map::from_iter([
-            ("loadExternalMCPConfigs".to_string(), json!(true)),
-            ("showWindowOnStartup".to_string(), json!(true)),
+            ("loadExternalMCPConfigs".to_string(), json!(false)),
+            ("showWindowOnStartup".to_string(), json!(false)),
             ("theme".to_string(), json!("system")),
             ("language".to_string(), json!("zh")),
             ("desktopMcpListenHost".to_string(), json!("127.0.0.1")),

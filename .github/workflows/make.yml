@@ -181,7 +181,7 @@ jobs:
           tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
           releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('MCP Link {0}', github.ref_name) || '' }}
           generateReleaseNotes: true
-          releaseDraft: true
+          releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true

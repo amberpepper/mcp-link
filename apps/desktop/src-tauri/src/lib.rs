@@ -54,7 +54,7 @@ pub fn run_desktop() {
                         .get("showWindowOnStartup")
                         .and_then(serde_json::Value::as_bool)
                 })
-                .unwrap_or(true);
+                .unwrap_or(false);
             let autolaunch = app.autolaunch();
             let autostart_result = if auto_start_app {
                 autolaunch.enable()
@@ -77,7 +77,7 @@ pub fn run_desktop() {
                             .get("loadExternalMCPConfigs")
                             .and_then(serde_json::Value::as_bool)
                     })
-                    .unwrap_or(true);
+                    .unwrap_or(false);
                 if load_external {
                     if let Err(error) = import_external_mcp_configs(&state) {
                         eprintln!("Failed to import external MCP configs: {error}");
@@ -129,7 +129,7 @@ pub fn run_server() {
                     .get("loadExternalMCPConfigs")
                     .and_then(serde_json::Value::as_bool)
             })
-            .unwrap_or(true);
+            .unwrap_or(false);
         if load_external {
             if let Err(error) = mcp::external_configs::import_external_mcp_configs(&state) {
                 eprintln!("Failed to import external MCP configs: {error}");

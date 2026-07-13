@@ -97,6 +97,7 @@
     "serverStarted": "Server started successfully",
     "serverStopped": "Server stopped successfully",
     "errorDetails": "Error Details",
+    "noErrorDetails": "No error details available",
     "configRequired": "Config Required",
     "requiredParamsNotSet": "Required parameters are not configured"
   },
@@ -106,10 +107,8 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "loadExternalMCPConfigs": "Load MCP configurations from external applications",
-    "loadExternalMCPConfigsDescription": "Allow MCP Link to import server configurations from other applications like Claude for Desktop",
-    "showWindowOnStartup": "Launch at system startup",
-    "showWindowOnStartupDescription": "Automatically launch MCP Link after signing in. Disable to remove it from system startup.",
+    "loadExternalMCPConfigs": "Import external MCP configurations",
+    "showWindowOnStartup": "Launch at startup",
     "skillAgentPaths": "Skill sync directories",
     "skillAgentPathsDescription": "Enabled skills are synchronized to these agent skill directories. MCP Link-managed skills are migrated when this list changes.",
     "skillAgentPathsDefault": "Using defaults: %USERPROFILE%\\.codex\\skills and %USERPROFILE%\\.claude\\skills",
@@ -179,6 +178,7 @@
     "revokeError": "Failed to revoke access key"
   },
   "serverDetails": {
+    "requestLogs": "Request Logs",
     "serverName": "Server Name",
     "finalCommand": "Execution Command",
     "noInputParams": "No input parameters",
@@ -236,6 +236,7 @@
     "import": "Import JSON Configuration",
     "errorTitle": "Invalid JSON Configuration",
     "errorInvalidJson": "The provided input is not valid JSON.",
+    "errorInvalidFormat": "The JSON configuration format is invalid.",
     "errorEmptyMcpServers": "The 'mcpServers' object must contain at least one server.",
     "errorInvalidServerConfig": "Invalid server configuration for '{{serverName}}'.",
     "errorMissingCommand": "Server '{{serverName}}' is missing the required 'command' field.",
@@ -250,6 +251,12 @@
     "login": "Log in",
     "loginSuccess": "Login successful",
     "loginFailed": "Login failed"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "mustBeNumber": "Enter a valid number.",
+    "minValue": "The minimum value is {{min}}.",
+    "maxValue": "The maximum value is {{max}}."
   },
   "manual": {
     "description": "Create MCP server configurations manually",

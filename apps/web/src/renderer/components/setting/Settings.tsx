@@ -38,8 +38,9 @@ import PageLayout from "@/renderer/components/layout/PageLayout";
 const Settings: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [loadExternalMCPConfigs, setLoadExternalMCPConfigs] =
-    useState<boolean>(true);
-  const [showWindowOnStartup, setShowWindowOnStartup] = useState<boolean>(true);
+    useState<boolean>(false);
+  const [showWindowOnStartup, setShowWindowOnStartup] =
+    useState<boolean>(false);
   const [skillAgentPaths, setSkillAgentPaths] = useState<string[]>([]);
   const [newSkillAgentPath, setNewSkillAgentPath] = useState("");
   const [networkInterfaces, setNetworkInterfaces] = useState<
@@ -177,8 +178,8 @@ const Settings: React.FC = () => {
           platformAPI.settings.get(),
           platformAPI.settings.listNetworkInterfaces().catch(() => []),
         ]);
-        setLoadExternalMCPConfigs(settings.loadExternalMCPConfigs ?? true);
-        setShowWindowOnStartup(settings.showWindowOnStartup ?? true);
+        setLoadExternalMCPConfigs(settings.loadExternalMCPConfigs ?? false);
+        setShowWindowOnStartup(settings.showWindowOnStartup ?? false);
         setSkillAgentPaths(settings.skillAgentPaths ?? []);
         setDesktopMcpListenHost(settings.desktopMcpListenHost ?? "127.0.0.1");
         setDesktopMcpListenPort(String(settings.desktopMcpListenPort ?? 3284));
@@ -397,14 +398,9 @@ const Settings: React.FC = () => {
 
           {/* Show Window on Startup */}
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">
-                {t("settings.showWindowOnStartup")}
-              </label>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.showWindowOnStartupDescription")}
-              </p>
-            </div>
+            <label className="text-sm font-medium">
+              {t("settings.showWindowOnStartup")}
+            </label>
             <Switch
               checked={showWindowOnStartup}
               onCheckedChange={handleStartupVisibilityToggle}
@@ -414,14 +410,9 @@ const Settings: React.FC = () => {
 
           {/* Load External MCP Configs */}
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-sm font-medium">
-                {t("settings.loadExternalMCPConfigs")}
-              </label>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.loadExternalMCPConfigsDescription")}
-              </p>
-            </div>
+            <label className="text-sm font-medium">
+              {t("settings.loadExternalMCPConfigs")}
+            </label>
             <Switch
               checked={loadExternalMCPConfigs}
               onCheckedChange={handleExternalMCPConfigsToggle}

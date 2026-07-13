@@ -16,8 +16,8 @@ export interface AppSettings {
   };
 }
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  loadExternalMCPConfigs: true,
-  showWindowOnStartup: true,
+  loadExternalMCPConfigs: false,
+  showWindowOnStartup: false,
   desktopMcpListenHost: "127.0.0.1",
   desktopMcpListenPort: 3284,
   theme: "system",

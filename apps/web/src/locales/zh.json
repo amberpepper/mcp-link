@@ -97,6 +97,7 @@
     "serverStarted": "服务器启动成功",
     "serverStopped": "服务器停止成功",
     "errorDetails": "错误详情",
+    "noErrorDetails": "暂无错误详情",
     "configRequired": "需要配置",
     "requiredParamsNotSet": "未设置必需参数"
   },
@@ -106,15 +107,13 @@
     "themeLight": "浅色",
     "themeDark": "深色",
     "themeSystem": "系统",
-    "showWindowOnStartup": "开机自动启动",
-    "showWindowOnStartupDescription": "登录 Windows 后自动启动 MCP Link。关闭后将从系统启动项移除。",
+    "showWindowOnStartup": "开机自启动",
     "skillAgentPaths": "Skills 同步目录",
     "skillAgentPathsDescription": "启用的 Skill 会同步到这些 Agent Skills 目录。修改后会自动迁移 MCP Link 管理的 Skill。",
     "skillAgentPathsDefault": "当前使用默认目录：%USERPROFILE%\\.codex\\skills 和 %USERPROFILE%\\.claude\\skills",
     "skillAgentPathsPlaceholder": "输入 Agent Skills 目录",
     "skillAgentPathsBrowse": "选择目录",
-    "loadExternalMCPConfigs": "从外部应用程序加载 MCP 配置",
-    "loadExternalMCPConfigsDescription": "允许 MCP Link 从其他应用程序（如 Claude for Desktop）导入服务器配置",
+    "loadExternalMCPConfigs": "导入外部 MCP 配置",
     "desktopMcpEndpoint": "MCP 监听",
     "listenAddress": "监听地址",
     "listenPort": "监听端口",
@@ -179,6 +178,7 @@
     "revokeError": "撤销访问 Key 失败"
   },
   "serverDetails": {
+    "requestLogs": "请求日志",
     "serverName": "服务器名称",
     "finalCommand": "执行命令",
     "noInputParams": "无输入参数",
@@ -236,6 +236,7 @@
     "import": "导入 JSON 配置",
     "errorTitle": "无效的 JSON 配置",
     "errorInvalidJson": "提供的输入不是有效的 JSON。",
+    "errorInvalidFormat": "JSON 配置格式无效。",
     "errorEmptyMcpServers": "'mcpServers' 对象必须包含至少一个服务器。",
     "errorInvalidServerConfig": "'{{serverName}}' 的服务器配置无效。",
     "errorMissingCommand": "服务器 '{{serverName}}' 缺少必需的 'command' 字段。",
@@ -250,6 +251,12 @@
     "login": "登录",
     "loginSuccess": "登录成功",
     "loginFailed": "登录失败"
+  },
+  "validation": {
+    "required": "此项为必填项。",
+    "mustBeNumber": "请输入有效数字。",
+    "minValue": "最小值为 {{min}}。",
+    "maxValue": "最大值为 {{max}}。"
   },
   "manual": {
     "description": "手动创建 MCP 服务器配置",
