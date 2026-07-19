@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 2,
+  "id": "zcode",
+  "name": "ZCode Desktop",
+  "version": "1.3.0",
+  "description": "Zhipu ZCode Desktop SQLite session adapter",
+  "icon": "icon_windows.png",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.stats",
+    "management.read",
+    "management.write",
+    "sessions.resume",
+    "config.read",
+    "config.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "file",
+    "homeLevelsUp": 3,
+    "sessionPathTemplate": "${ROOT}/cli/db/db.sqlite",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "zcode",
+    "resumeArguments": ["--session", "{sessionId}"],
+    "pathHints": ["Windows: %USERPROFILE%\\.zcode", "Linux: ~/.zcode"]
+  },
+  "databases": [
+    {
+      "id": "sessions",
+      "pathTemplate": "${SESSION_ROOT}",
+      "access": "read-only"
+    }
+  ],
+  "files": [
+    {
+      "id": "config",
+      "pathTemplate": "${ROOT}/v2/config.json",
+      "access": "read-write"
+    },
+    {
+      "id": "settings",
+      "pathTemplate": "${ROOT}/v2/setting.json",
+      "access": "read-write"
+    },
+    {
+      "id": "cli-config",
+      "pathTemplate": "${ROOT}/cli/config.json",
+      "access": "read-write"
+    }
+  ],
+  "configFiles": [
+    {
+      "id": "config",
+      "label": "config.json",
+      "pathTemplate": "${ROOT}/v2/config.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "settings",
+      "label": "setting.json",
+      "pathTemplate": "${ROOT}/v2/setting.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "cli-config",
+      "label": "CLI config.json",
+      "pathTemplate": "${ROOT}/cli/config.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "zcode-global",
+      "label": "ZCode global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "zcode-project",
+      "label": "ZCode project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.zcode/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

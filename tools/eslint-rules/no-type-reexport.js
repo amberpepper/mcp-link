@@ -14,52 +14,24 @@ module.exports = {
     schema: [],
   },
   create(context) {
+    const filename = context.getFilename().replace(/\\/g, "/");
+    const isSharedTypeEntry = filename.includes("/packages/shared/src/types/");
+
     return {
       ExportNamedDeclaration(node) {
-        // Check if this is a type re-export
-        if (node.exportKind === "type" && node.source) {
-          const sourceValue = node.source.value;
+        if (!node.source || isSharedTypeEntry) return;
 
-          // Allow re-exports only from @mcp_link/shared
-          if (!sourceValue.startsWith("@mcp_link/shared")) {
-            context.report({
-              node,
-              messageId: "noTypeReexport",
-            });
-          }
-        }
+        const hasTypeExport =
+          node.exportKind === "type" ||
+          node.specifiers.some((specifier) => specifier.exportKind === "type");
+        if (!hasTypeExport) return;
 
-        // Check for export type { ... } from "..."
-        if (node.specifiers && node.source) {
-          const hasTypeExport = node.specifiers.some(
-            (spec) => spec.exportKind === "type" || node.exportKind === "type",
-          );
-
-          if (hasTypeExport) {
-            const sourceValue = node.source.value;
-            if (!sourceValue.startsWith("@mcp_link/shared")) {
-              context.report({
-                node,
-                messageId: "noTypeReexport",
-              });
-            }
-          }
-        }
-      },
-
-      // Check for export { type X } from "..."
-      ExportSpecifier(node) {
-        if (node.exportKind === "type") {
-          const parent = node.parent;
-          if (parent.type === "ExportNamedDeclaration" && parent.source) {
-            const sourceValue = parent.source.value;
-            if (!sourceValue.startsWith("@mcp_link/shared")) {
-              context.report({
-                node,
-                messageId: "noTypeReexport",
-              });
-            }
-          }
+        const sourceValue = node.source.value;
+        if (!sourceValue.startsWith("@mcp_link/shared")) {
+          context.report({
+            node,
+            messageId: "noTypeReexport",
+          });
         }
       },
     };

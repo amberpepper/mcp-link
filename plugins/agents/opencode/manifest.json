@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 2,
+  "id": "opencode",
+  "name": "OpenCode",
+  "version": "1.3.0",
+  "description": "OpenCode SQLite session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.stats",
+    "management.read",
+    "management.write",
+    "sessions.resume",
+    "sessions.duplicate",
+    "sessions.rename",
+    "sessions.delete",
+    "sessions.export-native",
+    "skills.global",
+    "skills.project",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "file",
+    "homeLevelsUp": 3,
+    "sessionPathTemplate": "${ROOT}/opencode.db",
+    "skillPathTemplate": "${HOME}/.config/opencode/skills",
+    "command": "opencode",
+    "resumeArguments": ["--session", "{sessionId}"],
+    "pathHints": [
+      "Windows: %USERPROFILE%\\.config\\opencode",
+      "Linux/WSL: ~/.config/opencode"
+    ]
+  },
+  "files": [
+    {
+      "id": "config",
+      "pathTemplate": "${HOME}/.config/opencode/opencode.json",
+      "access": "read-write"
+    }
+  ],
+  "databases": [
+    {
+      "id": "sessions",
+      "pathTemplate": "${SESSION_ROOT}",
+      "access": "read-write"
+    }
+  ],
+  "configFiles": [
+    {
+      "id": "config",
+      "label": "opencode.json",
+      "pathTemplate": "${HOME}/.config/opencode/opencode.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "AGENTS.md",
+      "pathTemplate": "${HOME}/.config/opencode/AGENTS.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# OpenCode global instructions\n\n"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "opencode-global",
+      "label": "OpenCode global Skills",
+      "scope": "global",
+      "pathTemplate": "${HOME}/.config/opencode/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "opencode-project",
+      "label": "Project agent skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

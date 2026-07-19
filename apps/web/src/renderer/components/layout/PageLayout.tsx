@@ -42,7 +42,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
       )}
       <div
         className={cn(
-          "flex-1 overflow-auto px-6 py-4 min-h-0",
+          "h-0 min-h-0 flex-1 overflow-auto px-6 py-4",
           contentClassName,
         )}
       >

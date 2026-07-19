@@ -1,0 +1,10 @@
+[workspace]
+members = ["crush", "gemini-cli", "kimi-code", "qwen-code", "reasonix", "pi", "grok-cli", "omp", "zcode", "opencode", "codex", "claude-code", "sdk"]
+resolver = "2"
+
+[workspace.dependencies]
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+serde_json = "1"
+serde_yaml = "0.9"
+toml_edit = "0.22"
+mcp-link-agent-wasm-sdk = { path = "sdk" }

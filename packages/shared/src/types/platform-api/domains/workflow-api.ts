@@ -37,7 +37,6 @@ export interface WorkflowAPI {
       updates: Partial<Omit<HookModule, "id">>,
     ) => Promise<HookModule | null>;
     delete: (id: string) => Promise<boolean>;
-    execute: (id: string, context: any) => Promise<any>;
     import: (module: Omit<HookModule, "id">) => Promise<HookModule>;
     validate: (script: string) => Promise<{ valid: boolean; error?: string }>;
   };

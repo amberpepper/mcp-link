@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 2,
+  "id": "omp",
+  "name": "OMP (Oh My Pi)",
+  "version": "1.1.1",
+  "description": "Oh My Pi coding agent session adapter",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.resume",
+    "sessions.export-native",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/agent/sessions",
+    "skillPathTemplate": "${ROOT}/agent/skills",
+    "command": "omp",
+    "resumeArguments": ["--session", "{sessionId}"],
+    "pathHints": ["Windows: %USERPROFILE%\\.omp", "Linux/WSL: ~/.omp"]
+  },
+  "configFiles": [
+    {
+      "id": "config",
+      "label": "config.yml",
+      "pathTemplate": "${ROOT}/agent/config.yml",
+      "language": "yaml",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "models",
+      "label": "models.yml",
+      "pathTemplate": "${ROOT}/agent/models.yml",
+      "language": "yaml",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "mcp",
+      "label": "mcp.json",
+      "pathTemplate": "${ROOT}/agent/mcp.json",
+      "language": "json",
+      "defaultContent": "{\n  \"mcpServers\": {},\n  \"disabledServers\": []\n}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "AGENTS.md",
+      "pathTemplate": "${ROOT}/agent/AGENTS.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# OMP global instructions\n\n"
+    }
+  ],
+  "files": [
+    { "id": "data", "pathTemplate": "${ROOT}", "access": "read-only" },
+    { "id": "config", "pathTemplate": "${ROOT}/agent/config.yml", "access": "read-write" },
+    { "id": "models", "pathTemplate": "${ROOT}/agent/models.yml", "access": "read-write" },
+    { "id": "mcp", "pathTemplate": "${ROOT}/agent/mcp.json", "access": "read-write" }
+  ],
+  "skillTargets": [
+    {
+      "id": "omp-global",
+      "label": "OMP global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/agent/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "omp-project",
+      "label": "OMP project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.omp/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

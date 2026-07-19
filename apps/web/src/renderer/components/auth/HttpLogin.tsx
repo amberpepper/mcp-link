@@ -5,10 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-import {
-  callHttpPlatform,
-  HTTP_ACCESS_TOKEN_KEY,
-} from "@/renderer/platform-api/http-platform-api";
+import { loginHttpSession } from "@/renderer/platform-api/http-platform-api";
 
 const HttpLogin: React.FC = () => {
   const { t } = useTranslation();
@@ -22,14 +19,11 @@ const HttpLogin: React.FC = () => {
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setIsSubmitting(true);
-    const token = password.trim();
-    window.localStorage.setItem(HTTP_ACCESS_TOKEN_KEY, token);
     try {
-      await callHttpPlatform("getSettings", []);
+      await loginHttpSession(password.trim());
       toast.success(t("auth.loginSuccess"));
       navigate("/servers", { replace: true });
     } catch (error) {
-      window.localStorage.removeItem(HTTP_ACCESS_TOKEN_KEY);
       toast.error(
         error instanceof Error ? error.message : t("auth.loginFailed"),
       );
@@ -49,7 +43,7 @@ const HttpLogin: React.FC = () => {
               onChange={(event) => setPassword(event.target.value)}
               placeholder={t("auth.serverPassword")}
               type={showPassword ? "text" : "password"}
-              className="pr-10"
+              className="hide-native-password-toggle pr-10"
               onKeyDown={(event) => {
                 if (event.key === "Enter" && canSubmit && !isSubmitting) {
                   handleSubmit();

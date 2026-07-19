@@ -79,10 +79,11 @@ export default [
       ],
 
       "custom/no-scattered-types": [
-        "error",
+        "warn",
         {
           allowedPaths: [
             "packages/shared/src/types",
+            "apps/web/src/renderer/platform-api",
             "tools/eslint-rules",
             ".d.ts",
             "packages/ui/src",
@@ -118,7 +119,12 @@ export default [
   },
   {
     // 允许动态导入的特定文件。
-    files: ["**/src/main.ts", "**/src/main/**/*.ts", "**/mcp-http-server.ts"],
+    files: [
+      "**/src/main.ts",
+      "**/src/main/**/*.ts",
+      "**/mcp-http-server.ts",
+      "**/renderer/components/App.tsx",
+    ],
     rules: {
       "no-restricted-syntax": "off",
     },

@@ -78,7 +78,7 @@ function normalizeBaseUrl(rawBaseUrl: string): string {
   let url: URL;
   try {
     url = new URL(candidate);
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid URL provided: ${rawBaseUrl}`);
   }
 

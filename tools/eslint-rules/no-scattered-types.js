@@ -47,7 +47,7 @@ module.exports = {
     const allowComponentProps = options.allowComponentProps !== false;
     const allowedPatterns = options.allowedPatterns || [];
 
-    const filename = context.getFilename();
+    const filename = context.getFilename().replace(/\\/g, "/");
 
     // Check if file is in allowed path
     const isAllowedPath = allowedPaths.some((path) => filename.includes(path));

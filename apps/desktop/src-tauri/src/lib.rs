@@ -1,6 +1,10 @@
+#[cfg(all(feature = "desktop", feature = "server"))]
+compile_error!("desktop and server features are mutually exclusive");
+
 mod access_keys;
 #[cfg(feature = "server")]
 mod embed;
+mod gateway;
 mod hook;
 #[cfg(feature = "server")]
 mod http;
@@ -22,7 +26,7 @@ use tauri::Manager;
 use tauri_plugin_autostart::ManagerExt;
 
 #[cfg(feature = "desktop")]
-use crate::mcp::external_configs::import_external_mcp_configs;
+use crate::gateway::server::start_desktop_model_gateway;
 #[cfg(feature = "desktop")]
 use crate::mcp::server::start_desktop_mcp_http_server;
 #[cfg(feature = "desktop")]
@@ -50,6 +54,7 @@ pub fn run_desktop() {
             let data_dir = app.path().local_data_dir()?.join("MCP Link");
             std::fs::create_dir_all(&data_dir)?;
             let state = Arc::new(DesktopState::load(data_dir.join("mcp.db")));
+            platform::agents::install_bundled_agent_plugins(&state);
             let auto_start_app = state
                 .store
                 .lock()
@@ -62,10 +67,11 @@ pub fn run_desktop() {
                 })
                 .unwrap_or(false);
             let autolaunch = app.autolaunch();
-            let autostart_result = if auto_start_app {
-                autolaunch.enable()
-            } else {
-                autolaunch.disable()
+            let autostart_result = match autolaunch.is_enabled() {
+                Ok(current) if current == auto_start_app => Ok(()),
+                Ok(_) if auto_start_app => autolaunch.enable(),
+                Ok(_) => autolaunch.disable(),
+                Err(error) => Err(error),
             };
             if let Err(error) = autostart_result {
                 eprintln!("Failed to synchronize app autostart setting: {error}");
@@ -100,23 +106,8 @@ pub fn run_desktop() {
             .build(app)?;
 
             start_desktop_mcp_http_server(state.clone());
+            start_desktop_model_gateway(state.clone());
             tauri::async_runtime::spawn(async move {
-                let load_external = state
-                    .store
-                    .lock()
-                    .ok()
-                    .and_then(|store| {
-                        store
-                            .settings
-                            .get("loadExternalMCPConfigs")
-                            .and_then(serde_json::Value::as_bool)
-                    })
-                    .unwrap_or(false);
-                if load_external {
-                    if let Err(error) = import_external_mcp_configs(&state) {
-                        eprintln!("Failed to import external MCP configs: {error}");
-                    }
-                }
                 initialize_skill_files(&state);
                 start_auto_start_servers(state).await;
             });
@@ -165,46 +156,39 @@ pub fn run_desktop() {
 
 #[cfg(feature = "server")]
 pub fn run_server() {
-    use std::{net::SocketAddr, sync::Arc};
+    use std::sync::Arc;
 
     let state = Arc::new(state::DesktopState::load(executable_db_path()));
+    platform::agents::install_bundled_agent_plugins(&state);
     let addr = std::env::var("MCP_LINK_HTTP_ADDR").unwrap_or_else(|_| "127.0.0.1:3284".into());
     let addr = addr
-        .parse::<SocketAddr>()
+        .parse::<std::net::SocketAddr>()
         .unwrap_or_else(|error| panic!("invalid MCP_LINK_HTTP_ADDR: {error}"));
 
-    eprintln!(
-        "MCP Link server password: {} (change in settings)",
-        state.server_password()
-    );
+    if state.server_password() == "admin" {
+        eprintln!(
+            "WARNING: MCP Link is using the default server password 'admin'. Change it in Settings."
+        );
+    } else {
+        eprintln!("MCP Link server password is configured.");
+    }
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .expect("failed to build tokio runtime");
     runtime.block_on(async move {
-        let load_external = state
-            .store
-            .lock()
-            .ok()
-            .and_then(|store| {
-                store
-                    .settings
-                    .get("loadExternalMCPConfigs")
-                    .and_then(serde_json::Value::as_bool)
-            })
-            .unwrap_or(false);
-        if load_external {
-            if let Err(error) = mcp::external_configs::import_external_mcp_configs(&state) {
-                eprintln!("Failed to import external MCP configs: {error}");
-            }
-        }
         platform::skills::initialize_skill_files(&state);
         mcp::servers::start_auto_start_servers(state.clone()).await;
         let listener = tokio::net::TcpListener::bind(addr)
             .await
             .unwrap_or_else(|error| panic!("failed to bind {addr}: {error}"));
-        eprintln!("MCP Link server listening on http://{addr}");
+        let actual_addr = listener.local_addr().unwrap_or(addr);
+        if let Ok(mut endpoint) = state.model_gateway_endpoint.lock() {
+            *endpoint = Some(format!("http://{actual_addr}"));
+        }
+        mcp::server::start_server_mcp_http_server(state.clone(), actual_addr).await;
+        eprintln!("MCP Link server listening on http://{actual_addr}");
         axum::serve(listener, http::build_router(state))
             .await
             .expect("MCP Link server stopped unexpectedly");

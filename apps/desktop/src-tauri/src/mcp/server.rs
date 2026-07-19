@@ -1,8 +1,6 @@
-#[cfg(feature = "desktop")]
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::{collections::HashMap, future::Future, sync::Arc};
 
-#[cfg(feature = "desktop")]
 use axum::routing::get;
 use axum::{
     body::Body,
@@ -47,46 +45,59 @@ const ROUTER_CALL_TOOL_TOOL: &str = "mcp_router_call_tool";
 
 #[cfg(feature = "desktop")]
 pub(crate) fn start_desktop_mcp_http_server(state: Arc<DesktopState>) {
-    if let Ok(mut task) = state.mcp_server_task.lock() {
-        if let Some(handle) = task.take() {
-            handle.abort();
-        }
-    }
-    if let Ok(mut endpoint) = state.mcp_endpoint.lock() {
-        *endpoint = None;
-    }
-
-    let task_state = state.clone();
-    let handle = tauri::async_runtime::spawn(async move {
-        let bind_addr = desktop_mcp_bind_addr(&task_state);
-        let listener = match bind_desktop_listener(bind_addr).await {
-            Some(listener) => listener,
-            None => return,
-        };
-        let actual_addr = listener.local_addr().unwrap_or(bind_addr);
-        let endpoint = format_mcp_endpoint(actual_addr);
-        if let Ok(mut mcp_endpoint) = task_state.mcp_endpoint.lock() {
-            *mcp_endpoint = Some(endpoint.clone());
-        }
-
-        let router = Router::new()
-            .route("/health", get(mcp_health))
-            .merge(build_mcp_link(task_state.clone()))
-            .with_state(task_state);
-
-        eprintln!("MCP Link desktop endpoint listening on {endpoint}");
-        if let Err(error) = axum::serve(listener, router).await {
-            eprintln!("Desktop MCP endpoint stopped: {error}");
+    tauri::async_runtime::spawn(async move {
+        if let Err(error) = restart_desktop_mcp_http_server(state).await {
+            eprintln!("Failed to start desktop MCP endpoint: {error}");
         }
     });
-
-    if let Ok(mut task) = state.mcp_server_task.lock() {
-        *task = Some(handle);
-    }
 }
 
 #[cfg(feature = "desktop")]
-fn desktop_mcp_bind_addr(state: &DesktopState) -> SocketAddr {
+pub(crate) async fn restart_desktop_mcp_http_server(
+    state: Arc<DesktopState>,
+) -> Result<(), String> {
+    let previous_task = state
+        .mcp_server_task
+        .lock()
+        .ok()
+        .and_then(|mut task| task.take());
+    if let Some(handle) = previous_task {
+        handle.abort();
+        let _ = handle.await;
+    }
+    clear_mcp_listener_status(&state);
+
+    let bind_addr = configured_mcp_bind_addr(&state);
+    let listener = bind_desktop_listener(bind_addr).await.map_err(|error| {
+        set_mcp_listener_error(&state, error.clone());
+        error
+    })?;
+    let actual_addr = listener.local_addr().unwrap_or(bind_addr);
+    let endpoint = set_mcp_endpoint(&state, actual_addr);
+
+    let router = Router::new()
+        .route("/health", get(mcp_health))
+        .merge(build_mcp_link(state.clone()))
+        .with_state(state.clone());
+    let task_state = state.clone();
+    let handle = tauri::async_runtime::spawn(async move {
+        if let Err(error) = axum::serve(listener, router).await {
+            let message = format!("Desktop MCP endpoint stopped: {error}");
+            eprintln!("{message}");
+            set_mcp_listener_error(&task_state, message);
+            if let Ok(mut current) = task_state.mcp_endpoint.lock() {
+                *current = None;
+            }
+        }
+    });
+    if let Ok(mut task) = state.mcp_server_task.lock() {
+        *task = Some(handle);
+    }
+    eprintln!("MCP Link desktop endpoint listening on {endpoint}");
+    Ok(())
+}
+
+fn configured_mcp_bind_addr(state: &DesktopState) -> SocketAddr {
     let (host, port) = state
         .store
         .lock()
@@ -122,35 +133,156 @@ fn desktop_mcp_bind_addr(state: &DesktopState) -> SocketAddr {
     SocketAddr::new(ip, port)
 }
 
+#[cfg(feature = "server")]
+pub(crate) async fn start_server_mcp_http_server(state: Arc<DesktopState>, main_addr: SocketAddr) {
+    let bind_addr = configured_mcp_bind_addr(&state);
+    if bind_addr == main_addr
+        || (main_addr.ip().is_unspecified() && main_addr.port() == bind_addr.port())
+    {
+        let endpoint_addr = if main_addr.ip().is_unspecified() {
+            bind_addr
+        } else {
+            main_addr
+        };
+        set_mcp_endpoint(&state, endpoint_addr);
+        return;
+    }
+
+    let listener = match tokio::net::TcpListener::bind(bind_addr).await {
+        Ok(listener) => listener,
+        Err(error) => {
+            eprintln!(
+                "Failed to bind configured MCP endpoint on {bind_addr}: {error}; using main server endpoint {main_addr}"
+            );
+            set_mcp_endpoint(&state, main_addr);
+            return;
+        }
+    };
+    let actual_addr = listener.local_addr().unwrap_or(bind_addr);
+    let endpoint = set_mcp_endpoint(&state, actual_addr);
+    let router = Router::new()
+        .route("/health", get(mcp_health))
+        .merge(build_mcp_link(state.clone()))
+        .with_state(state);
+    eprintln!("MCP Link configured endpoint listening on {endpoint}");
+    tokio::spawn(async move {
+        if let Err(error) = axum::serve(listener, router).await {
+            eprintln!("Configured MCP endpoint stopped: {error}");
+        }
+    });
+}
+
 #[cfg(feature = "desktop")]
-async fn bind_desktop_listener(bind_addr: SocketAddr) -> Option<tokio::net::TcpListener> {
+async fn bind_desktop_listener(bind_addr: SocketAddr) -> Result<tokio::net::TcpListener, String> {
     match tokio::net::TcpListener::bind(bind_addr).await {
-        Ok(listener) => Some(listener),
+        Ok(listener) => Ok(listener),
         Err(error) => {
             eprintln!("Failed to bind desktop MCP endpoint on {bind_addr}: {error}");
             let fallback = SocketAddr::from((Ipv4Addr::LOCALHOST, bind_addr.port()));
             if bind_addr == fallback {
-                return None;
+                return Err(format!(
+                    "Failed to bind desktop MCP endpoint on {bind_addr}: {error}"
+                ));
             }
             match tokio::net::TcpListener::bind(fallback).await {
                 Ok(listener) => {
                     eprintln!("Fell back to desktop MCP endpoint on {fallback}");
-                    Some(listener)
+                    Ok(listener)
                 }
                 Err(fallback_error) => {
-                    eprintln!(
-                        "Failed to bind fallback desktop MCP endpoint on {fallback}: {fallback_error}"
-                    );
-                    None
+                    Err(format!(
+                        "Failed to bind desktop MCP endpoint on {bind_addr} ({error}) and fallback {fallback} ({fallback_error})"
+                    ))
                 }
             }
         }
     }
 }
 
-#[cfg(feature = "desktop")]
 fn format_mcp_endpoint(addr: SocketAddr) -> String {
     format!("http://{addr}/mcp")
+}
+
+pub(crate) fn set_mcp_endpoint(state: &DesktopState, addr: SocketAddr) -> String {
+    let endpoint = format_mcp_endpoint(addr);
+    if let Ok(mut current) = state.mcp_endpoint.lock() {
+        *current = Some(endpoint.clone());
+    }
+    if let Ok(mut error) = state.mcp_listener_error.lock() {
+        *error = None;
+    }
+    endpoint
+}
+
+#[cfg(feature = "desktop")]
+fn clear_mcp_listener_status(state: &DesktopState) {
+    if let Ok(mut endpoint) = state.mcp_endpoint.lock() {
+        *endpoint = None;
+    }
+    if let Ok(mut error) = state.mcp_listener_error.lock() {
+        *error = None;
+    }
+}
+
+#[cfg(feature = "desktop")]
+fn set_mcp_listener_error(state: &DesktopState, message: String) {
+    if let Ok(mut error) = state.mcp_listener_error.lock() {
+        *error = Some(message);
+    }
+}
+
+pub(crate) fn mcp_endpoint_status(state: &DesktopState) -> Value {
+    let endpoint = state
+        .mcp_endpoint
+        .lock()
+        .ok()
+        .and_then(|current| current.clone());
+    let error = state
+        .mcp_listener_error
+        .lock()
+        .ok()
+        .and_then(|current| current.clone());
+    json!({
+        "endpoint": endpoint.clone().unwrap_or_else(|| current_mcp_endpoint(state)),
+        "running": endpoint.is_some(),
+        "error": error,
+    })
+}
+
+pub(crate) fn current_mcp_endpoint(state: &DesktopState) -> String {
+    if let Ok(current) = state.mcp_endpoint.lock() {
+        if let Some(endpoint) = current.as_ref() {
+            return endpoint.clone();
+        }
+    }
+
+    let (host, port) = state
+        .store
+        .lock()
+        .ok()
+        .map(|store| {
+            let host = store
+                .settings
+                .get("desktopMcpListenHost")
+                .and_then(Value::as_str)
+                .unwrap_or("127.0.0.1")
+                .to_string();
+            let port = store
+                .settings
+                .get("desktopMcpListenPort")
+                .and_then(Value::as_u64)
+                .and_then(|value| u16::try_from(value).ok())
+                .filter(|value| *value > 0)
+                .unwrap_or(3284);
+            (host, port)
+        })
+        .unwrap_or_else(|| ("127.0.0.1".to_string(), 3284));
+    let display_host = if host.contains(':') && !host.starts_with('[') {
+        format!("[{host}]")
+    } else {
+        host
+    };
+    format!("http://{display_host}:{port}/mcp")
 }
 
 pub(crate) fn build_mcp_link(state: Arc<DesktopState>) -> Router<Arc<DesktopState>> {
@@ -221,7 +353,6 @@ fn unauthorized_response(message: &str) -> Response {
         .into_response()
 }
 
-#[cfg(feature = "desktop")]
 async fn mcp_health(State(state): State<Arc<DesktopState>>) -> Json<Value> {
     let server_count = state
         .store
@@ -233,12 +364,7 @@ async fn mcp_health(State(state): State<Arc<DesktopState>>) -> Json<Value> {
         .lock()
         .map(|runtimes| runtimes.len())
         .unwrap_or_default();
-    let endpoint = state
-        .mcp_endpoint
-        .lock()
-        .ok()
-        .and_then(|endpoint| endpoint.clone())
-        .unwrap_or_else(|| "http://127.0.0.1:3284/mcp".to_string());
+    let endpoint = current_mcp_endpoint(&state);
 
     Json(json!({
         "ok": true,
@@ -1378,57 +1504,5 @@ fn merge_context_value(mut base: Value, patch: Value) -> Value {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn routed_resource_uri_round_trips_original_uri() {
-        let routed = route_resource_uri("server-1", "file:///tmp/example.txt");
-        assert_eq!(
-            split_routed_resource_uri(&routed),
-            Some((
-                "server-1".to_string(),
-                "file:///tmp/example.txt".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn router_gateway_tools_have_stable_names() {
-        let names = router_gateway_tools()
-            .into_iter()
-            .map(|tool| tool.name.into_owned())
-            .collect::<Vec<_>>();
-        assert_eq!(names, vec![ROUTER_LIST_TOOLS_TOOL, ROUTER_CALL_TOOL_TOOL]);
-    }
-
-    #[test]
-    fn gateway_call_parses_target_and_arguments() {
-        let arguments = json!({
-            "server_id": "server-a",
-            "tool_name": "sample_tool",
-            "arguments": { "query": "MCP" }
-        });
-        let (server_id, request) =
-            parse_gateway_call(arguments.as_object()).expect("gateway call should parse");
-        assert_eq!(server_id, "server-a");
-        assert_eq!(request.name.as_ref(), "sample_tool");
-        assert_eq!(
-            request
-                .arguments
-                .as_ref()
-                .and_then(|arguments| arguments.get("query"))
-                .and_then(Value::as_str),
-            Some("MCP")
-        );
-    }
-
-    #[test]
-    fn gateway_call_rejects_recursive_calls() {
-        let arguments = json!({
-            "server_id": "router",
-            "tool_name": ROUTER_CALL_TOOL_TOOL
-        });
-        assert!(parse_gateway_call(arguments.as_object()).is_err());
-    }
-}
+#[path = "server_tests.rs"]
+mod tests;

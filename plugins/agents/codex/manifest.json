@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "id": "codex",
+  "name": "Codex",
+  "version": "1.3.0",
+  "description": "OpenAI Codex CLI session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.stats",
+    "management.read",
+    "management.write",
+    "sessions.resume",
+    "sessions.duplicate",
+    "sessions.delete",
+    "sessions.export-native",
+    "skills.global",
+    "skills.project",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/sessions",
+    "skillPathTemplate": "${HOME}/.agents/skills",
+    "command": "codex",
+    "resumeArguments": ["resume", "{sessionId}"],
+    "pathHints": ["Windows: %USERPROFILE%\\.codex", "Linux/WSL: ~/.codex"]
+  },
+  "configFiles": [
+    {
+      "id": "config",
+      "label": "config.toml",
+      "pathTemplate": "${ROOT}/config.toml",
+      "language": "toml",
+      "defaultContent": ""
+    },
+    {
+      "id": "global-prompt",
+      "label": "AGENTS.md",
+      "pathTemplate": "${ROOT}/AGENTS.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Codex global instructions\n\n"
+    }
+  ],
+  "files": [
+    {
+      "id": "config",
+      "pathTemplate": "${ROOT}/config.toml",
+      "access": "read-write"
+    },
+    {
+      "id": "sessions",
+      "pathTemplate": "${SESSION_ROOT}",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "codex-global",
+      "label": "Codex global Skills",
+      "scope": "global",
+      "pathTemplate": "${HOME}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "codex-project",
+      "label": "Codex project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

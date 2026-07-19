@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "id": "pi",
+  "name": "Pi",
+  "version": "1.1.0",
+  "description": "Pi coding agent session adapter",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.resume",
+    "sessions.export-native",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/sessions",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "pi",
+    "resumeArguments": ["--session", "{sessionId}"],
+    "pathHints": [
+      "Windows: %USERPROFILE%\\.pi\\agent",
+      "Linux/WSL: ~/.pi/agent"
+    ]
+  },
+  "configFiles": [
+    {
+      "id": "settings",
+      "label": "settings.json",
+      "pathTemplate": "${ROOT}/settings.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "models",
+      "label": "models.json",
+      "pathTemplate": "${ROOT}/models.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "AGENTS.md",
+      "pathTemplate": "${ROOT}/AGENTS.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Pi global instructions\n\n"
+    }
+  ],
+  "files": [
+    { "id": "data", "pathTemplate": "${ROOT}", "access": "read-only" },
+    { "id": "settings", "pathTemplate": "${ROOT}/settings.json", "access": "read-write" },
+    { "id": "models", "pathTemplate": "${ROOT}/models.json", "access": "read-write" }
+  ],
+  "skillTargets": [
+    {
+      "id": "pi-global",
+      "label": "Pi global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "pi-project",
+      "label": "Pi project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.pi/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    },
+    {
+      "id": "pi-agents-project",
+      "label": "Shared project Agent Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

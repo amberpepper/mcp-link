@@ -4,6 +4,7 @@ export * from "./view-preferences-store";
 
 // Platform-dependent store factories
 export * from "./server-store";
+export * from "./session-store";
 export * from "./theme-store";
 
 // Import platform API type
@@ -11,6 +12,7 @@ import type { PlatformAPI } from "@mcp_link/shared";
 
 // Import store factories
 import { createServerStore } from "./server-store";
+import { createSessionStore } from "./session-store";
 import { createThemeStore, initializeThemeStore } from "./theme-store";
 import { localPlatformAPI } from "@/renderer/platform-api/runtime-platform-api";
 
@@ -21,6 +23,7 @@ function getPlatformAPI(): PlatformAPI {
 
 // Create store instances with dynamic platform API getter
 export const useServerStore = createServerStore(getPlatformAPI);
+export const useSessionStore = createSessionStore(getPlatformAPI);
 export const useThemeStore = createThemeStore(getPlatformAPI);
 
 // Store initialization utility
@@ -37,5 +40,12 @@ export const initializeStores = async () => {
     await useServerStore.getState().refreshServers();
   } catch (error) {
     console.error("Failed to load initial servers:", error);
+  }
+
+  // Load initial session browsing data (plugins + default filters)
+  try {
+    await useSessionStore.getState().loadPlugins();
+  } catch (error) {
+    console.error("Failed to load sessions:", error);
   }
 };

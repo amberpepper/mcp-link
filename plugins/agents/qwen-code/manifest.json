@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 2,
+  "id": "qwen-code",
+  "name": "Qwen Code",
+  "version": "1.1.1",
+  "description": "Qwen Code CLI session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.resume",
+    "sessions.export-native",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/tmp",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "qwen",
+    "resumeArguments": ["--resume", "{sessionId}"]
+  },
+  "configFiles": [
+    {
+      "id": "settings",
+      "label": "settings.json",
+      "pathTemplate": "${ROOT}/settings.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "QWEN.md",
+      "pathTemplate": "${ROOT}/QWEN.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Qwen Code global instructions\n\n"
+    }
+  ],
+  "files": [
+    { "id": "data", "pathTemplate": "${ROOT}", "access": "read-only" },
+    {
+      "id": "settings",
+      "pathTemplate": "${ROOT}/settings.json",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "qwen-code-global",
+      "label": "Qwen Code global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "qwen-code-project",
+      "label": "Qwen Code project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.qwen/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    },
+    {
+      "id": "qwen-code-agents-project",
+      "label": "Shared project Agent Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

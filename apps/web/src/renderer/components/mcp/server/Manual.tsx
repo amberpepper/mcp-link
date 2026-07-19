@@ -31,11 +31,6 @@ import { RadioGroup, RadioGroupItem } from "@mcp_link/ui";
 import { ScrollArea } from "@mcp_link/ui";
 import { useServerStore } from "@/renderer/stores";
 
-interface EnvVariable {
-  key: string;
-  value: string;
-}
-
 // ---- Small presentational helpers -----------------------------------------
 const TabIntro: React.FC<{
   right?: React.ReactNode;
@@ -73,12 +68,13 @@ const Manual: React.FC = () => {
   const [serverName, setServerName] = useState("");
   const [command, setCommand] = useState("");
   const [args, setArgs] = useState("");
-  const [envVars, setEnvVars] = useState<EnvVariable[]>([]);
+  const [envVars, setEnvVars] = useState<Array<{ key: string; value: string }>>(
+    [],
+  );
   const [isLoadingManual, setIsLoadingManual] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     serverName?: string;
     command?: string;
-    args?: string;
   }>({});
 
   // Remote Server State
@@ -303,10 +299,9 @@ const Manual: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const errors: { serverName?: string; command?: string; args?: string } = {};
+    const errors: { serverName?: string; command?: string } = {};
     if (!serverName.trim()) errors.serverName = t("manual.errors.nameRequired");
     if (!command.trim()) errors.command = t("manual.errors.commandRequired");
-    if (!args.trim()) errors.args = t("manual.errors.argsRequired");
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -639,32 +634,16 @@ const Manual: React.FC = () => {
             <Row>
               <div className="flex items-center gap-2">
                 <Label htmlFor="args" className="text-right">
-                  {t("manual.args")} <span className="text-destructive">*</span>
+                  {t("manual.args")}
                 </Label>
               </div>
               <Input
                 id="args"
                 value={args}
-                onChange={(e) => {
-                  setArgs(e.target.value);
-                  if (validationErrors.args) {
-                    setValidationErrors({
-                      ...validationErrors,
-                      args: undefined,
-                    });
-                  }
-                }}
+                onChange={(e) => setArgs(e.target.value)}
                 placeholder="-y @modelcontextprotocol/server-puppeteer"
-                aria-invalid={!!validationErrors.args}
-                className={validationErrors.args ? "border-destructive" : ""}
               />
-              {validationErrors.args ? (
-                <p className="text-xs text-destructive">
-                  {validationErrors.args}
-                </p>
-              ) : (
-                <FieldNote>{t("manual.argsHelp")}</FieldNote>
-              )}
+              <FieldNote>{t("manual.argsHelp")}</FieldNote>
             </Row>
 
             <div className="mt-4">

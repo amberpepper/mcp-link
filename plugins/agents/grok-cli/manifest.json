@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 2,
+  "id": "grok-cli",
+  "name": "Grok CLI",
+  "version": "1.1.0",
+  "description": "xAI Grok CLI session adapter",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.resume",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "file",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/grok.db",
+    "skillPathTemplate": "${HOME}/.agents/skills",
+    "command": "grok",
+    "resumeArguments": ["--session", "{sessionId}"]
+  },
+  "databases": [
+    {
+      "id": "sessions",
+      "pathTemplate": "${SESSION_ROOT}",
+      "access": "read-only"
+    }
+  ],
+  "configFiles": [
+    {
+      "id": "settings",
+      "label": "user-settings.json",
+      "pathTemplate": "${ROOT}/user-settings.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "AGENTS.md",
+      "pathTemplate": "${ROOT}/AGENTS.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Grok CLI global instructions\n\n"
+    }
+  ],
+  "files": [
+    {
+      "id": "settings",
+      "pathTemplate": "${ROOT}/user-settings.json",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "grok-cli-global",
+      "label": "Grok CLI global Skills",
+      "scope": "global",
+      "pathTemplate": "${HOME}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "grok-cli-project",
+      "label": "Grok CLI project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

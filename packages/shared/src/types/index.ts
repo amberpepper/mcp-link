@@ -18,6 +18,7 @@ export type {
   ServerStatus,
   CreateServerInput,
   // Settings API
+  McpEndpointStatus,
   NetworkInterfaceAddress,
   SettingsAPI,
   // Log API
@@ -28,11 +29,29 @@ export type {
   WorkflowAPI,
   // Skills API
   SkillsAPI,
+  AgentsAPI,
+  GatewayAPI,
   // Main Platform API
   PlatformAPI,
+  PlatformCapabilities,
+} from "./platform-api";
+export type {
+  GatewayProtocol,
+  GatewayCallLog,
+  GatewayCallLogQuery,
+  GatewayCallStatus,
+  GatewayProvider,
+  GatewayProviderDraft,
+  GatewayProviderInput,
+  GatewayRemoveTarget,
+  GatewayRoute,
+  GatewayRouteDraft,
+  GatewayRouteInput,
+  GatewaySettings,
 } from "./platform-api";
 export type { LogEntry as PlatformLogEntry } from "./platform-api";
 export * from "./utils";
 export * from "./cli";
 export * from "./workflow-types";
 export * from "./skill-types";
+export * from "./agent-types";

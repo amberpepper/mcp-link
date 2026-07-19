@@ -4,6 +4,7 @@ import type {
   CreateSkillInput,
   UpdateSkillInput,
 } from "../../skill-types";
+import type { AgentSkillTarget, SkillInstallation } from "../../agent-types";
 
 /**
  * Skills management API
@@ -18,4 +19,13 @@ export interface SkillsAPI {
   // Actions
   openFolder: (id?: string) => Promise<void>;
   import: () => Promise<Skill>;
+  listTargets: () => Promise<AgentSkillTarget[]>;
+  setInstallation: (input: {
+    skillId: string;
+    agentId: string;
+    targetId: string;
+    projectPath?: string;
+    mode?: "copy" | "symlink" | "native";
+  }) => Promise<SkillInstallation>;
+  removeInstallation: (id: string) => Promise<boolean>;
 }

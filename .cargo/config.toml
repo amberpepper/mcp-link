@@ -1,0 +1,4 @@
+[alias]
+server-run = "run --manifest-path apps/desktop/src-tauri/Cargo.toml --no-default-features --features server --bin mcp-link-server"
+server-build = "build --release --manifest-path apps/desktop/src-tauri/Cargo.toml --no-default-features --features server --bin mcp-link-server"
+server-check = "check --manifest-path apps/desktop/src-tauri/Cargo.toml --no-default-features --features server --bin mcp-link-server"

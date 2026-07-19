@@ -2,37 +2,11 @@ use serde_json::{json, Value};
 use uuid::Uuid;
 
 use crate::{
-    hook::runtime::{execute_hook_script, validate_hook_module},
+    hook::runtime::validate_hook_module,
     platform::entities::delete_entity,
-    state::{find_entity_mut, DesktopState, StoreState},
-    util::{
-        json::{merge_value_object, required_string, set_object_value, value_id},
-        security::sanitize_for_security_boundary,
-    },
+    state::{find_entity_mut, StoreState},
+    util::json::{merge_value_object, required_string, set_object_value},
 };
-
-pub(crate) fn execute_hook_module_platform(
-    state: &DesktopState,
-    args: &[Value],
-) -> Result<Value, String> {
-    let id = required_string(&args, 0)?;
-    let context = args.get(1).cloned().unwrap_or_else(|| json!({}));
-    let script = {
-        let store = state
-            .store
-            .lock()
-            .map_err(|_| "Failed to lock desktop state".to_string())?;
-        store
-            .hooks
-            .iter()
-            .find(|hook| value_id(hook) == Some(id.as_str()))
-            .and_then(|hook| hook.get("script").and_then(Value::as_str))
-            .map(ToOwned::to_owned)
-            .ok_or_else(|| format!("Hook module not found: {id}"))?
-    };
-
-    execute_hook_script(&script, &sanitize_for_security_boundary(&context))
-}
 
 pub(crate) fn create_hook(store: &mut StoreState, input: Option<&Value>) -> Result<Value, String> {
     let input = input.cloned().unwrap_or_else(|| json!({}));

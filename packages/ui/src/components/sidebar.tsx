@@ -24,10 +24,13 @@ import { ViewVerticalIcon } from "@radix-ui/react-icons";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
+const SIDEBAR_WIDTH_ICON = "3.5rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+const SIDEBAR_WIDTH_KEY = "sidebar:width";
+const SIDEBAR_DEFAULT_WIDTH_REM = 16;
+const SIDEBAR_MIN_WIDTH_REM = 12;
+const SIDEBAR_MAX_WIDTH_REM = 32;
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed";
@@ -37,6 +40,8 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  widthRem: number;
+  setWidthRem: (widthRem: number) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -92,6 +97,30 @@ const SidebarProvider = React.forwardRef<
       [setOpenProp, open],
     );
 
+    // Resizable width state, persisted to localStorage.
+    const [widthRem, _setWidthRem] = React.useState<number>(() => {
+      if (typeof window === "undefined") return SIDEBAR_DEFAULT_WIDTH_REM;
+      const stored = window.localStorage.getItem(SIDEBAR_WIDTH_KEY);
+      const parsed = stored ? parseFloat(stored) : NaN;
+      return Number.isFinite(parsed) &&
+        parsed >= SIDEBAR_MIN_WIDTH_REM &&
+        parsed <= SIDEBAR_MAX_WIDTH_REM
+        ? parsed
+        : SIDEBAR_DEFAULT_WIDTH_REM;
+    });
+    const setWidthRem = React.useCallback((next: number) => {
+      const clamped = Math.min(
+        SIDEBAR_MAX_WIDTH_REM,
+        Math.max(SIDEBAR_MIN_WIDTH_REM, next),
+      );
+      _setWidthRem(clamped);
+      try {
+        window.localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clamped));
+      } catch {
+        // ignore persistence errors (e.g. private mode)
+      }
+    }, []);
+
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
@@ -128,6 +157,8 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        widthRem,
+        setWidthRem,
       }),
       [
         state,
@@ -137,6 +168,8 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        widthRem,
+        setWidthRem,
       ],
     );
 
@@ -144,9 +177,10 @@ const SidebarProvider = React.forwardRef<
       <SidebarContext.Provider value={contextValue}>
         <TooltipProvider delayDuration={0}>
           <div
+            data-sidebar-wrapper=""
             style={
               {
-                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width": `${widthRem}rem`,
                 "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
                 ...style,
               } as React.CSSProperties
@@ -239,7 +273,7 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
+            "relative w-[--sidebar-width] bg-transparent",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -249,7 +283,7 @@ const Sidebar = React.forwardRef<
         />
         <div
           className={cn(
-            "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
+            "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -328,6 +362,67 @@ const SidebarRail = React.forwardRef<
   );
 });
 SidebarRail.displayName = "SidebarRail";
+
+const SidebarResizer = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"div">
+>(({ className, ...props }, ref) => {
+  const { open, isMobile, widthRem, setWidthRem } = useSidebar();
+
+  const onPointerDown = React.useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!open || isMobile) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const target = event.currentTarget;
+      const sidebarRoot = target.closest("[data-side]") as HTMLElement | null;
+      const side =
+        (sidebarRoot?.getAttribute("data-side") as "left" | "right") || "left";
+
+      const startX = event.clientX;
+      const startWidth = widthRem;
+
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      const onPointerMove = (e: PointerEvent) => {
+        const delta = e.clientX - startX;
+        const direction = side === "right" ? -1 : 1;
+        setWidthRem(startWidth + (direction * delta) / 16);
+      };
+      const onPointerUp = () => {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
+      };
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+    },
+    [open, isMobile, widthRem, setWidthRem],
+  );
+
+  if (!open || isMobile) return null;
+
+  return (
+    <div
+      ref={ref}
+      data-sidebar="resizer"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize sidebar"
+      tabIndex={-1}
+      onPointerDown={onPointerDown}
+      className={cn(
+        "absolute inset-y-0 right-0 z-30 hidden w-1.5 cursor-col-resize bg-transparent transition-colors group-data-[side=right]:left-0 group-data-[side=right]:right-auto hover:bg-sidebar-border md:block",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
+SidebarResizer.displayName = "SidebarResizer";
 
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
@@ -772,6 +867,7 @@ export {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
+  SidebarResizer,
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,

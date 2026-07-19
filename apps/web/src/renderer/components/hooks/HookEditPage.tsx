@@ -24,7 +24,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import PageLayout from "@/renderer/components/layout/PageLayout";
 import { usePlatformAPI } from "@/renderer/platform-api";
-import LegacyHookView from "./LegacyHookView";
 import {
   HOOK_METHODS,
   HookMethod,
@@ -79,7 +78,13 @@ const HookEditPage: React.FC<HookEditPageProps> = ({ mode = "edit" }) => {
           setRule(null);
           return;
         }
-        setRule(toHookRule(workflow));
+        const nextRule = toHookRule(workflow);
+        if (!nextRule) {
+          setNotFound(true);
+          setRule(null);
+        } else {
+          setRule(nextRule);
+        }
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : t("hooks.loadFailed"),
@@ -138,19 +143,6 @@ const HookEditPage: React.FC<HookEditPageProps> = ({ mode = "edit" }) => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!rule) return;
-    try {
-      await platformAPI.workflows.workflows.delete(rule.id);
-      toast.success(t("hooks.deleteSuccess"));
-      navigate("/hooks");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("hooks.deleteFailed"),
-      );
-    }
-  };
-
   if (!isNew && !workflowId) return <Navigate to="/hooks" replace />;
 
   if (isLoading) {
@@ -177,12 +169,6 @@ const HookEditPage: React.FC<HookEditPageProps> = ({ mode = "edit" }) => {
           </button>
         </div>
       </PageLayout>
-    );
-  }
-
-  if (rule.isLegacy) {
-    return (
-      <LegacyHookView rule={rule} onBack={goBack} onDelete={handleDelete} />
     );
   }
 

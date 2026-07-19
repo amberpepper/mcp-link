@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "id": "claude-code",
+  "name": "Claude Code",
+  "version": "1.2.1",
+  "description": "Anthropic Claude Code session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.stats",
+    "management.read",
+    "management.write",
+    "sessions.resume",
+    "sessions.duplicate",
+    "sessions.delete",
+    "sessions.export-native",
+    "skills.global",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/projects",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "claude",
+    "resumeArguments": ["--resume", "{sessionId}"],
+    "pathHints": ["Windows: %USERPROFILE%\\.claude", "Linux/WSL: ~/.claude"]
+  },
+  "configFiles": [
+    {
+      "id": "settings",
+      "label": "settings.json",
+      "pathTemplate": "${ROOT}/settings.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "user-config",
+      "label": ".claude.json",
+      "pathTemplate": "${HOME}/.claude.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "CLAUDE.md",
+      "pathTemplate": "${ROOT}/CLAUDE.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Claude Code global instructions\n\n"
+    }
+  ],
+  "files": [
+    {
+      "id": "settings",
+      "pathTemplate": "${ROOT}/settings.json",
+      "access": "read-write"
+    },
+    {
+      "id": "state",
+      "pathTemplate": "${HOME}/.claude.json",
+      "access": "read-write"
+    },
+    {
+      "id": "sessions",
+      "pathTemplate": "${SESSION_ROOT}",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "claude-global",
+      "label": "Claude Code global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "claude-project",
+      "label": "Claude Code project skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.claude/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

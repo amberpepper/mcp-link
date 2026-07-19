@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 2,
+  "id": "gemini-cli",
+  "name": "Gemini CLI",
+  "version": "1.1.1",
+  "description": "Google Gemini CLI session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.resume",
+    "sessions.export-native",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/tmp",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "gemini",
+    "resumeArguments": ["--resume", "{sessionId}"]
+  },
+  "configFiles": [
+    {
+      "id": "settings",
+      "label": "settings.json",
+      "pathTemplate": "${ROOT}/settings.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "GEMINI.md",
+      "pathTemplate": "${ROOT}/GEMINI.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Gemini CLI global instructions\n\n"
+    }
+  ],
+  "files": [
+    { "id": "data", "pathTemplate": "${ROOT}", "access": "read-only" },
+    {
+      "id": "settings",
+      "pathTemplate": "${ROOT}/settings.json",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "gemini-cli-global",
+      "label": "Gemini CLI global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "gemini-cli-project",
+      "label": "Gemini CLI project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.gemini/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    },
+    {
+      "id": "gemini-cli-agents-project",
+      "label": "Shared project Agent Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.agents/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

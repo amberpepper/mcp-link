@@ -1,6 +1,5 @@
 use serde_json::{json, Value};
 use std::{fs, path::PathBuf, sync::Arc};
-use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 
 use crate::{platform::skills::create_skill_files, state::DesktopState, util::json::value_id};
@@ -55,14 +54,14 @@ async fn pick_path(
 }
 
 pub(crate) async fn open_skill_folder(
-    app: tauri::AppHandle,
+    _app: tauri::AppHandle,
     state: tauri::State<'_, Arc<DesktopState>>,
     args: Vec<Value>,
 ) -> Result<Value, String> {
-    let skills_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|error| error.to_string())?
+    let skills_dir = state
+        .store_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."))
         .join("skills");
     fs::create_dir_all(&skills_dir).map_err(|error| error.to_string())?;
 

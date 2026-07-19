@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 2,
+  "id": "reasonix",
+  "name": "Reasonix",
+  "version": "1.1.1",
+  "description": "Reasonix CLI and Desktop session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.resume",
+    "sessions.export-native",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 0,
+    "sessionPathTemplate": "${ROOT}",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "reasonix",
+    "resumeArguments": ["--resume", "{sessionId}"]
+  },
+  "configFiles": [
+    {
+      "id": "config",
+      "label": "config.toml",
+      "pathTemplate": "${ROOT}/config.toml",
+      "language": "toml",
+      "defaultContent": ""
+    },
+    {
+      "id": "global-prompt",
+      "label": "REASONIX.md",
+      "pathTemplate": "${ROOT}/REASONIX.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Reasonix global instructions\n\n"
+    }
+  ],
+  "files": [
+    { "id": "data", "pathTemplate": "${ROOT}", "access": "read-only" },
+    { "id": "config", "pathTemplate": "${ROOT}/config.toml", "access": "read-write" },
+    { "id": "credentials", "pathTemplate": "${ROOT}/.env", "access": "read-write" }
+  ],
+  "skillTargets": [
+    {
+      "id": "reasonix-global",
+      "label": "Reasonix global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "reasonix-project",
+      "label": "Reasonix project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.reasonix/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

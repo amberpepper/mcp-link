@@ -29,7 +29,10 @@ const HooksPage: React.FC = () => {
     try {
       const workflows = await platformAPI.workflows.workflows.list();
       setRules(
-        workflows.map(toHookRule).sort((a, b) => a.createdAt - b.createdAt),
+        workflows
+          .map(toHookRule)
+          .filter((rule): rule is HookRule => rule !== null)
+          .sort((a, b) => a.createdAt - b.createdAt),
       );
     } catch (error) {
       toast.error(
@@ -72,7 +75,6 @@ const HooksPage: React.FC = () => {
   };
 
   const duplicateRule = async (rule: HookRule) => {
-    if (rule.isLegacy) return;
     try {
       const now = Date.now();
       await platformAPI.workflows.workflows.create(

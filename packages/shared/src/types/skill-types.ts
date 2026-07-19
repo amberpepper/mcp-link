@@ -10,7 +10,6 @@
 export interface Skill {
   id: string;
   name: string; // Directory name (unique key)
-  enabled: boolean; // Whether symlinks are active
   createdAt: number;
   updatedAt: number;
 }
@@ -20,6 +19,7 @@ export interface Skill {
  */
 export interface SkillWithContent extends Skill {
   content: string | null; // SKILL.md content
+  installations: SkillInstallation[];
 }
 
 /**
@@ -38,3 +38,4 @@ export interface UpdateSkillInput {
   enabled?: boolean;
   content?: string;
 }
+import type { SkillInstallation } from "./agent-types";

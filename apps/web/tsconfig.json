@@ -23,6 +23,11 @@
       "@mcp_link/ui": ["../../packages/ui/src"]
     }
   },
-  "include": ["src", "../../packages/shared/src", "../../packages/ui/src"],
+  "include": [
+    "src",
+    "vite.config.ts",
+    "../../packages/shared/src",
+    "../../packages/ui/src"
+  ],
   "references": []
 }

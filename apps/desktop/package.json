@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm dev:desktop",
+    "dev:web": "cd ../.. && cargo server-run",
     "dev:desktop": "tauri dev",
     "build": "pnpm build:desktop",
     "build:desktop": "tauri build",

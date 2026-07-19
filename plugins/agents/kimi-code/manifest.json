@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 2,
+  "id": "kimi-code",
+  "name": "Kimi Code",
+  "version": "1.1.0",
+  "description": "Moonshot AI Kimi Code CLI session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.stats",
+    "sessions.resume",
+    "sessions.export-native",
+    "management.read",
+    "management.write",
+    "skills.global",
+    "skills.project",
+    "skills.symlink",
+    "config.read",
+    "config.write"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "directory",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/sessions",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "kimi",
+    "resumeArguments": ["--session", "{sessionId}"],
+    "pathHints": [
+      "Windows: %USERPROFILE%\\.kimi-code",
+      "Linux/WSL: ~/.kimi-code"
+    ]
+  },
+  "configFiles": [
+    {
+      "id": "config",
+      "label": "config.toml",
+      "pathTemplate": "${ROOT}/config.toml",
+      "language": "toml",
+      "defaultContent": ""
+    },
+    {
+      "id": "tui",
+      "label": "tui.toml",
+      "pathTemplate": "${ROOT}/tui.toml",
+      "language": "toml",
+      "defaultContent": ""
+    },
+    {
+      "id": "mcp",
+      "label": "mcp.json",
+      "pathTemplate": "${ROOT}/mcp.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "AGENTS.md",
+      "pathTemplate": "${ROOT}/AGENTS.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Kimi Code global instructions\n\n"
+    }
+  ],
+  "files": [
+    { "id": "data", "pathTemplate": "${ROOT}", "access": "read-only" },
+    {
+      "id": "config",
+      "pathTemplate": "${ROOT}/config.toml",
+      "access": "read-write"
+    },
+    {
+      "id": "tui",
+      "pathTemplate": "${ROOT}/tui.toml",
+      "access": "read-write"
+    },
+    {
+      "id": "mcp",
+      "pathTemplate": "${ROOT}/mcp.json",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "kimi-code-global",
+      "label": "Kimi Code global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "kimi-code-project",
+      "label": "Kimi Code project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.kimi-code/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

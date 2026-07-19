@@ -7,6 +7,7 @@ import { Input } from "@mcp_link/ui";
 import { Checkbox } from "@mcp_link/ui";
 import { Button } from "@mcp_link/ui";
 import { usePlatformAPI } from "@/renderer/platform-api/hooks/use-platform-api";
+import { isTauriRuntime } from "@/renderer/platform-api/tauri-platform-api";
 
 interface ServerDetailsInputParamsProps {
   server: MCPServer;
@@ -66,7 +67,7 @@ const ServerDetailsInputParams: React.FC<ServerDetailsInputParamsProps> = ({
     param: MCPInputParam,
     value: string,
   ) => {
-    updateInputParam && updateInputParam(key, value);
+    updateInputParam?.(key, value);
     validateField(key, param, value);
   };
 
@@ -90,7 +91,7 @@ const ServerDetailsInputParams: React.FC<ServerDetailsInputParamsProps> = ({
             checked={actualValue === "true"}
             onCheckedChange={(checked) => {
               const newValue = String(checked);
-              updateInputParam && updateInputParam(key, newValue);
+              updateInputParam?.(key, newValue);
               validateField(key, param, newValue);
             }}
           />
@@ -127,34 +128,36 @@ const ServerDetailsInputParams: React.FC<ServerDetailsInputParamsProps> = ({
               }
               className={`font-mono flex-1 ${errors[key] ? "border-destructive" : ""}`}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                try {
-                  const result = await platformAPI.servers.selectFile({
-                    title:
-                      param.title ||
-                      (param.type === "directory"
-                        ? t("serverDetails.selectDirectory")
-                        : t("serverDetails.selectFile")),
-                    mode: param.type === "directory" ? "directory" : "file",
-                  });
-                  if (result.success && result.path) {
-                    const nextValue =
-                      param.multiple && actualValue
-                        ? `${actualValue};${result.path}`
-                        : result.path;
-                    updateInputParam && updateInputParam(key, nextValue);
-                    validateField(key, param, nextValue);
+            {isTauriRuntime() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const result = await platformAPI.servers.selectFile({
+                      title:
+                        param.title ||
+                        (param.type === "directory"
+                          ? t("serverDetails.selectDirectory")
+                          : t("serverDetails.selectFile")),
+                      mode: param.type === "directory" ? "directory" : "file",
+                    });
+                    if (result.success && result.path) {
+                      const nextValue =
+                        param.multiple && actualValue
+                          ? `${actualValue};${result.path}`
+                          : result.path;
+                      updateInputParam?.(key, nextValue);
+                      validateField(key, param, nextValue);
+                    }
+                  } catch (error) {
+                    console.error("File selection error:", error);
                   }
-                } catch (error) {
-                  console.error("File selection error:", error);
-                }
-              }}
-            >
-              {t("serverDetails.browse")}
-            </Button>
+                }}
+              >
+                {t("serverDetails.browse")}
+              </Button>
+            )}
           </div>
         );
 
@@ -171,7 +174,7 @@ const ServerDetailsInputParams: React.FC<ServerDetailsInputParamsProps> = ({
               placeholder={
                 param.default !== undefined ? String(param.default) : ""
               }
-              className={`font-mono pr-10 ${errors[key] ? "border-destructive" : ""}`}
+              className={`hide-native-password-toggle font-mono pr-10 ${errors[key] ? "border-destructive" : ""}`}
             />
             {param.sensitive && (
               <Button

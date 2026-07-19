@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "id": "crush",
+  "name": "Crush",
+  "version": "1.2.2",
+  "description": "Charmbracelet Crush WASM SQLite session adapter",
+  "icon": "icon.svg",
+  "capabilities": [
+    "sessions.list",
+    "sessions.read",
+    "sessions.stats",
+    "management.read",
+    "management.write",
+    "sessions.resume",
+    "config.read",
+    "config.write",
+    "skills.global",
+    "skills.project",
+    "skills.copy",
+    "skills.symlink"
+  ],
+  "instanceConfig": {
+    "sessionPathKind": "file",
+    "homeLevelsUp": 1,
+    "sessionPathTemplate": "${ROOT}/crush.db",
+    "skillPathTemplate": "${ROOT}/skills",
+    "command": "crush",
+    "resumeArguments": ["--session", "{sessionId}"],
+    "pathHints": ["Windows: %USERPROFILE%\\.crush", "Linux/WSL: ~/.crush"]
+  },
+  "configFiles": [
+    {
+      "id": "settings",
+      "label": "crush.json",
+      "pathTemplate": "${LOCALAPPDATA}/crush/crush.json",
+      "language": "json",
+      "defaultContent": "{}\n"
+    },
+    {
+      "id": "global-prompt",
+      "label": "CRUSH.md",
+      "pathTemplate": "${HOME}/.config/crush/CRUSH.md",
+      "language": "markdown",
+      "kind": "prompt",
+      "defaultContent": "# Crush global instructions\n\n"
+    }
+  ],
+  "databases": [
+    {
+      "id": "sessions",
+      "pathTemplate": "${SESSION_ROOT}",
+      "access": "read-only"
+    }
+  ],
+  "files": [
+    {
+      "id": "settings",
+      "pathTemplate": "${LOCALAPPDATA}/crush/crush.json",
+      "access": "read-write"
+    }
+  ],
+  "skillTargets": [
+    {
+      "id": "crush-global",
+      "label": "Crush global Skills",
+      "scope": "global",
+      "pathTemplate": "${ROOT}/skills",
+      "mode": "symlink",
+      "format": "agents-skill"
+    },
+    {
+      "id": "crush-project",
+      "label": "Crush project Skills",
+      "scope": "project",
+      "pathTemplate": "${PROJECT}/.crush/skills",
+      "mode": "symlink",
+      "format": "agents-skill",
+      "projectPathRequired": true
+    }
+  ],
+  "runtime": { "kind": "wasm", "entry": "plugin.wasm" }
+}

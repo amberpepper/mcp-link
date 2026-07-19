@@ -2,11 +2,21 @@ import type { Theme } from "./ui";
 
 export type AppLanguage = "en" | "zh" | "ja";
 export type CloseBehavior = "exit" | "minimizeToTray";
+export type SessionTerminal =
+  | "auto"
+  | "windowsTerminal"
+  | "powershell7"
+  | "windowsPowerShell"
+  | "cmd";
+
+export interface SessionTerminalOption {
+  id: SessionTerminal;
+}
+
 export interface AppSettings {
-  loadExternalMCPConfigs?: boolean;
   showWindowOnStartup?: boolean;
   closeBehavior?: CloseBehavior;
-  skillAgentPaths?: string[];
+  sessionTerminal?: SessionTerminal;
   desktopMcpListenHost?: string;
   desktopMcpListenPort?: number;
   serverPassword?: string;
@@ -18,9 +28,9 @@ export interface AppSettings {
   };
 }
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  loadExternalMCPConfigs: false,
   showWindowOnStartup: false,
   closeBehavior: "exit",
+  sessionTerminal: "auto",
   desktopMcpListenHost: "127.0.0.1",
   desktopMcpListenPort: 3284,
   theme: "system",

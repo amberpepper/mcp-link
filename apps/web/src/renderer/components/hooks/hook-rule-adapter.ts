@@ -25,8 +25,6 @@ export interface HookRule {
   script: string;
   createdAt: number;
   updatedAt: number;
-  isLegacy?: boolean;
-  nodeCount?: number;
 }
 
 function isHookMethod(value: string): value is HookMethod {
@@ -54,25 +52,12 @@ function isHookRuleShape(workflow: WorkflowDefinition): boolean {
   return before || after;
 }
 
-export function toHookRule(workflow: WorkflowDefinition): HookRule {
+export function toHookRule(workflow: WorkflowDefinition): HookRule | null {
   const method = isHookMethod(workflow.workflowType)
     ? workflow.workflowType
     : "tools/call";
 
-  if (!isHookRuleShape(workflow)) {
-    return {
-      id: workflow.id,
-      name: workflow.name,
-      enabled: workflow.enabled ?? false,
-      method,
-      timing: "before",
-      script: "",
-      createdAt: workflow.createdAt ?? Date.now(),
-      updatedAt: workflow.updatedAt ?? Date.now(),
-      isLegacy: true,
-      nodeCount: workflow.nodes.length,
-    };
-  }
+  if (!isHookRuleShape(workflow)) return null;
 
   const start = findNode(workflow, "start");
   const hook = findNode(workflow, "hook");

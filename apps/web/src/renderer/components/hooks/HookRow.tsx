@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,7 @@ import {
   StatusDot,
   Switch,
 } from "@mcp_link/ui";
-import { AlertTriangle, Copy, Edit2, MoreVertical, Trash2 } from "lucide-react";
+import { Copy, Edit2, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { HookRule } from "./hook-rule-adapter";
@@ -49,20 +48,12 @@ const HookRow: React.FC<HookRowProps> = ({
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
           <div className="truncate text-sm font-medium">{rule.name}</div>
-          {rule.isLegacy && (
-            <Badge variant="outline" className="gap-1">
-              <AlertTriangle className="h-3 w-3" />
-              {t("hooks.legacyBadge")}
-            </Badge>
-          )}
         </div>
         <div className="mt-0.5 truncate text-xs text-muted-foreground">
-          {rule.isLegacy
-            ? t("hooks.legacySubtitle", { count: rule.nodeCount ?? 0 })
-            : t("hooks.ruleSubtitle", {
-                method: rule.method,
-                timing: t(`hooks.timing.${rule.timing}`),
-              })}
+          {t("hooks.ruleSubtitle", {
+            method: rule.method,
+            timing: t(`hooks.timing.${rule.timing}`),
+          })}
         </div>
       </div>
       <div
@@ -86,29 +77,25 @@ const HookRow: React.FC<HookRowProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {!rule.isLegacy && (
-              <>
-                <DropdownMenuItem
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onClick();
-                  }}
-                >
-                  <Edit2 className="h-4 w-4" />
-                  {t("common.edit")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void onDuplicate();
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                  {t("hooks.duplicate")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
+            <DropdownMenuItem
+              onClick={(event) => {
+                event.stopPropagation();
+                onClick();
+              }}
+            >
+              <Edit2 className="h-4 w-4" />
+              {t("common.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(event) => {
+                event.stopPropagation();
+                void onDuplicate();
+              }}
+            >
+              <Copy className="h-4 w-4" />
+              {t("hooks.duplicate")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={(event) => {
                 event.stopPropagation();

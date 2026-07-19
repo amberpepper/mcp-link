@@ -18,10 +18,10 @@ const getTodayString = (): string => {
 const LogViewer: React.FC<LogViewerProps> = () => {
   const { t } = useTranslation();
 
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
+  const selectedDate = getTodayString();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
-  const { wordCloudData, activityItems, loading, refetch } = useActivityData({
+  const { wordCloudData, activityItems, loading } = useActivityData({
     selectedDate,
     refreshTrigger,
   });

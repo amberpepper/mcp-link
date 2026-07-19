@@ -67,7 +67,6 @@ export const SKILL_MARKET_SOURCES = [
 ] as const satisfies readonly MarketSourceDefinition[];
 
 export type McpMarketSourceId = (typeof MCP_MARKET_SOURCES)[number]["id"];
-type SkillMarketSourceId = (typeof SKILL_MARKET_SOURCES)[number]["id"];
 
 export function getMarketSourceEnabled(
   settings: AppSettings | null | undefined,
