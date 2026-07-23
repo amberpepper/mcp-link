@@ -16,7 +16,11 @@
 ```text
 mcp.db
 ├── store_state
-└── access_keys
+├── access_keys
+├── gateway_providers
+├── gateway_routes
+├── agent_instances
+└── skill_installations
 ```
 
 Desktop 和 Server 都把 `mcp.db` 放在当前可执行文件所在目录。
@@ -39,6 +43,15 @@ Desktop 和 Server 都把 `mcp.db` 放在当前可执行文件所在目录。
 
 这种结构保留了现有 Web 类型的灵活性，同时避免继续写 `state.json`。
 
+Gateway、Agent 实例和 Skill 安装关系不允许写入 `store_state`，必须使用字段化表、主键、索引和数据库约束。
+
+## 领域表
+
+- `gateway_providers`：协议、地址、密钥、模型和启用状态。
+- `gateway_routes`：提供商内唯一的模型别名映射，并通过外键级联删除。
+- `agent_instances`：CLI 类型、配置根目录、会话目录、Skill 目录和恢复命令。
+- `skill_installations`：Skill、Agent、目标和安装状态关系。
+
 ## `access_keys`
 
 `access_keys` 保存服务端调用 `/mcp` 所需的 key 管理数据：
@@ -53,13 +66,6 @@ Desktop 和 Server 都把 `mcp.db` 放在当前可执行文件所在目录。
 
 明文 key 只在创建时返回一次。
 
-## 迁移
+## 新领域规则
 
-- 如果 `mcp.db` 为空，会尝试从旧 `state.json` 迁移。
-- 如果旧 `access-keys.sqlite` 存在，会迁移到同一个 `mcp.db`。
-- 旧文件只作为输入，不再继续写入。
-
-## 后续方向
-
-当某类数据需要复杂查询或高频写入时，可以从 `store_state` 中拆成独立表。
-拆表必须带迁移和回滚策略。
+新增业务领域不能继续写入 `store_state`。只有低频、无关系查询需求的应用配置可以保留为 JSON；实体和实体关系必须建立正式表。

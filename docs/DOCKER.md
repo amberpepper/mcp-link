@@ -37,6 +37,6 @@ docker run --rm \
   mcp-link:latest
 ```
 
-打开 `http://localhost:3284`，使用默认密码 `admin` 登录。首次登录后请在设置页面修改密码。
+打开 `http://localhost:3284`，使用默认密码 `admin` 登录。进入设置页面后请立即修改密码；修改成功后当前浏览器会自动刷新 Cookie 登录会话。MCP Link 不会自动生成或替换用户密码。
 
 源码与发布地址：<https://github.com/amberpepper/mcp-link>

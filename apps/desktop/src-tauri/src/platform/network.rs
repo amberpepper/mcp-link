@@ -12,6 +12,13 @@ pub(crate) fn list_network_interfaces() -> Result<Value, String> {
         "Loopback",
         IpAddr::from([127, 0, 0, 1]),
     );
+    // Bind on all interfaces (not a real NIC; clients should still use a concrete host IP).
+    push_interface(
+        &mut entries,
+        &mut seen,
+        "All interfaces",
+        IpAddr::from([0, 0, 0, 0]),
+    );
 
     let interfaces = if_addrs::get_if_addrs().map_err(|error| error.to_string())?;
     for interface in interfaces {
@@ -23,16 +30,8 @@ pub(crate) fn list_network_interfaces() -> Result<Value, String> {
     }
 
     entries.sort_by(|left, right| {
-        let left_loopback = left
-            .get("isLoopback")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-        let right_loopback = right
-            .get("isLoopback")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-        right_loopback
-            .cmp(&left_loopback)
+        address_sort_rank(left)
+            .cmp(&address_sort_rank(right))
             .then_with(|| {
                 left.get("name")
                     .and_then(Value::as_str)
@@ -58,6 +57,24 @@ pub(crate) fn list_network_interfaces() -> Result<Value, String> {
     });
 
     Ok(Value::Array(entries))
+}
+
+fn address_sort_rank(item: &Value) -> u8 {
+    let address = item
+        .get("address")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let is_loopback = item
+        .get("isLoopback")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    if is_loopback {
+        0
+    } else if address == "0.0.0.0" {
+        1
+    } else {
+        2
+    }
 }
 
 fn push_interface(entries: &mut Vec<Value>, seen: &mut BTreeSet<String>, name: &str, ip: IpAddr) {

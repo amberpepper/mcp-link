@@ -277,7 +277,10 @@ pub(crate) fn current_mcp_endpoint(state: &DesktopState) -> String {
             (host, port)
         })
         .unwrap_or_else(|| ("127.0.0.1".to_string(), 3284));
-    let display_host = if host.contains(':') && !host.starts_with('[') {
+    // 0.0.0.0 is bind-all; clients still need a concrete host to connect.
+    let display_host = if host == "0.0.0.0" {
+        "127.0.0.1".to_string()
+    } else if host.contains(':') && !host.starts_with('[') {
         format!("[{host}]")
     } else {
         host

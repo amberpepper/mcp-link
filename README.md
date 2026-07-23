@@ -56,7 +56,7 @@ Rust and desktop packaging should be run from the native operating-system enviro
 pnpm dev:server
 ```
 
-Open <http://127.0.0.1:3284>. The default server password is `admin`; change it from Settings after the first login.
+Open <http://127.0.0.1:3284> and sign in with the default password `admin`. Change it from Settings after signing in. MCP Link keeps the configured password and never replaces it automatically.
 
 To listen on another address:
 
@@ -100,11 +100,13 @@ docker run --rm \
   mcp-link:latest
 ```
 
-Open <http://localhost:3284> and log in with the default password `admin`. See [Docker deployment](docs/DOCKER.md) for details.
+Open <http://localhost:3284>, sign in with `admin`, and change the password immediately. See [Docker deployment](docs/DOCKER.md) for details.
+
+Model gateway documentation: [English](docs/GATEWAY.md) · [简体中文](docs/GATEWAY.zh-CN.md)
 
 ## Privacy and security
 
-Configurations, credentials, logs, and server data are stored locally. When exposing Server mode to a network, change the default password and restrict network access as appropriate.
+Configurations, credentials, logs, and server data are stored locally. When exposing Server mode to a network, change the default password first and restrict network access as appropriate.
 
 ## Repository
 
