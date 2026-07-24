@@ -228,7 +228,10 @@
       "tokenDetail": "总计 {{total}} · 输入 {{input}} · 输出 {{output}} · 缓存读取 {{cacheRead}} · 缓存写入 {{cacheWrite}}",
       "error": "错误",
       "clearTitle": "清空全部调用日志？",
-      "clearDescription": "这会永久删除本机保存的网关调用元数据，不会影响 API 提供商配置。"
+      "clearDescription": "这会永久删除本机保存的网关调用元数据，不会影响 API 提供商配置。",
+      "pageInfo": "第 {{page}}/{{pageCount}} 页 | {{from}}-{{to}} / 共 {{total}} 条",
+      "prevPage": "上一页",
+      "nextPage": "下一页"
     }
   },
   "agents": {
@@ -305,7 +308,10 @@
     "instanceRemoveFailed": "删除实例失败",
     "pathAvailable": "目录可用",
     "pathUnavailable": "目录不可用",
-    "scopes": { "global": "全局", "project": "项目" },
+    "scopes": {
+      "global": "全局",
+      "project": "项目"
+    },
     "builtinDescriptions": {
       "codex": "OpenAI Codex CLI 与桌面版会话适配器",
       "claude-code": "Anthropic Claude Code 会话适配器",
@@ -754,7 +760,11 @@
     "copyDescription": "复制独立副本，兼容性最好；Skill 更新时 MCP Link 会重新同步。",
     "symlinkDescription": "使用目录链接共享同一份 Skill；Windows 需要开发者模式或相应权限。",
     "nativeDescription": "由对应 Agent 插件使用其原生接口安装和管理。",
-    "modes": { "copy": "复制", "symlink": "目录链接", "native": "原生安装" },
+    "modes": {
+      "copy": "复制",
+      "symlink": "目录链接",
+      "native": "原生安装"
+    },
     "installationStatus": {
       "synced": "已同步",
       "disabled": "已停用",

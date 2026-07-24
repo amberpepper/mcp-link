@@ -527,12 +527,12 @@ async fn http_gateway_converts_between_compatible_and_responses_upstreams() {
     assert!(upstream_state.requests.lock().unwrap()[1].1["messages"].is_array());
 
     let logs = list_call_logs(&state, None).unwrap();
-    assert_eq!(logs.as_array().unwrap().len(), 2);
-    assert_eq!(logs[0]["status"], "succeeded");
-    assert_eq!(logs[0]["clientProtocol"], "openai-responses");
-    assert_eq!(logs[0]["upstreamProtocol"], "openai-compatible");
-    assert_eq!(logs[0]["totalTokens"], 3);
-    assert!(logs[0]["requestId"].as_str().unwrap().starts_with("gw_"));
+    assert_eq!(logs["items"].as_array().unwrap().len(), 2);
+    assert_eq!(logs["items"][0]["status"], "succeeded");
+    assert_eq!(logs["items"][0]["clientProtocol"], "openai-responses");
+    assert_eq!(logs["items"][0]["upstreamProtocol"], "openai-compatible");
+    assert_eq!(logs["items"][0]["totalTokens"], 3);
+    assert!(logs["items"][0]["requestId"].as_str().unwrap().starts_with("gw_"));
 
     gateway_task.abort();
     upstream_task.abort();
@@ -615,10 +615,10 @@ async fn http_gateway_streams_chained_anthropic_conversion_before_upstream_finis
     assert!(remainder.contains("response.completed"), "{remainder}");
 
     let logs = list_call_logs(&state, None).unwrap();
-    assert_eq!(logs[0]["status"], "succeeded");
-    assert_eq!(logs[0]["inputTokens"], 3);
-    assert_eq!(logs[0]["outputTokens"], 2);
-    assert!(logs[0]["firstTokenMs"].as_u64().unwrap() >= 500);
+    assert_eq!(logs["items"][0]["status"], "succeeded");
+    assert_eq!(logs["items"][0]["inputTokens"], 3);
+    assert_eq!(logs["items"][0]["outputTokens"], 2);
+    assert!(logs["items"][0]["firstTokenMs"].as_u64().unwrap() >= 500);
 
     gateway_task.abort();
     upstream_task.abort();

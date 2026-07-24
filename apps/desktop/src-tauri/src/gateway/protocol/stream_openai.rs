@@ -130,14 +130,19 @@ impl ChatToResponsesState {
             .and_then(|choices| choices.first())
             .unwrap_or(&Value::Null);
         let delta = choice.get("delta").unwrap_or(&Value::Null);
-        if let Some(content) = delta.get("content").and_then(Value::as_str) {
-            self.full_text.push_str(content);
-            push_response_event(
-                &mut output,
-                "response.output_text.delta",
-                json!({ "type": "response.output_text.delta", "item_id": "msg_mcp_link", "output_index": 0, "content_index": 0, "delta": content }),
-                &mut self.sequence,
-            );
+        // Chat-compatible upstreams often put text in reasoning_content, content arrays,
+        // or message — not only delta.content as a plain string. Missing those left
+        // Responses clients (Codex) with empty assistant text.
+        if let Some(content) = chat_stream_text_delta(delta, choice) {
+            if !content.is_empty() {
+                self.full_text.push_str(&content);
+                push_response_event(
+                    &mut output,
+                    "response.output_text.delta",
+                    json!({ "type": "response.output_text.delta", "item_id": "msg_mcp_link", "output_index": 0, "content_index": 0, "delta": content }),
+                    &mut self.sequence,
+                );
+            }
         }
         for call in delta
             .get("tool_calls")
@@ -344,4 +349,30 @@ fn output_index(value: &Value) -> u64 {
         .and_then(Value::as_u64)
         .unwrap_or(1)
         .saturating_sub(1)
+}
+
+fn chat_stream_text_delta(delta: &Value, choice: &Value) -> Option<String> {
+    use super::portable_gateway_text;
+
+    // Prefer visible content; fall back to common reasoning-only fields used by
+    // DeepSeek/Qwen-style chat proxies so Codex still gets non-empty output.
+    for key in ["content", "text", "reasoning_content", "reasoning"] {
+        if let Some(value) = delta.get(key) {
+            let text = portable_gateway_text(value);
+            if !text.is_empty() {
+                return Some(text);
+            }
+        }
+    }
+    if let Some(message) = choice.get("message") {
+        for key in ["content", "text", "reasoning_content", "reasoning"] {
+            if let Some(value) = message.get(key) {
+                let text = portable_gateway_text(value);
+                if !text.is_empty() {
+                    return Some(text);
+                }
+            }
+        }
+    }
+    None
 }

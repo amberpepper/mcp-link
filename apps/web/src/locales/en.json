@@ -228,7 +228,10 @@
       "tokenDetail": "Total {{total}} · Input {{input}} · Output {{output}} · Cache read {{cacheRead}} · Cache write {{cacheWrite}}",
       "error": "Error",
       "clearTitle": "Clear all call logs?",
-      "clearDescription": "This permanently removes the locally stored gateway call metadata. Provider settings are not affected."
+      "clearDescription": "This permanently removes the locally stored gateway call metadata. Provider settings are not affected.",
+      "pageInfo": "Page {{page}}/{{pageCount}} | {{from}}-{{to}} of {{total}}",
+      "prevPage": "Previous",
+      "nextPage": "Next"
     }
   },
   "agents": {
@@ -305,7 +308,10 @@
     "instanceRemoveFailed": "Failed to remove instance",
     "pathAvailable": "Path available",
     "pathUnavailable": "Path unavailable",
-    "scopes": { "global": "Global", "project": "Project" },
+    "scopes": {
+      "global": "Global",
+      "project": "Project"
+    },
     "builtinDescriptions": {
       "codex": "OpenAI Codex CLI and desktop session adapter",
       "claude-code": "Anthropic Claude Code session adapter",
@@ -754,7 +760,11 @@
     "copyDescription": "Create an independent copy for maximum compatibility. MCP Link resyncs it after updates.",
     "symlinkDescription": "Share the canonical Skill through a directory link. Windows requires Developer Mode or permission.",
     "nativeDescription": "Let the corresponding Agent plugin install and manage the Skill through its native interface.",
-    "modes": { "copy": "Copy", "symlink": "Symlink", "native": "Native" },
+    "modes": {
+      "copy": "Copy",
+      "symlink": "Symlink",
+      "native": "Native"
+    },
     "installationStatus": {
       "synced": "Synced",
       "disabled": "Disabled",

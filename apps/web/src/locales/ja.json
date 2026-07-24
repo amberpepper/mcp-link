@@ -230,7 +230,10 @@
       "tokenDetail": "合計 {{total}} · 入力 {{input}} · 出力 {{output}} · キャッシュ読取 {{cacheRead}} · キャッシュ書込 {{cacheWrite}}",
       "error": "エラー",
       "clearTitle": "すべての呼び出しログを消去しますか？",
-      "clearDescription": "ローカルに保存されたゲートウェイ呼び出しのメタデータを完全に削除します。プロバイダー設定には影響しません。"
+      "clearDescription": "ローカルに保存されたゲートウェイ呼び出しのメタデータを完全に削除します。プロバイダー設定には影響しません。",
+      "pageInfo": "{{page}}/{{pageCount}} ページ | {{from}}-{{to}} / 全 {{total}} 件",
+      "prevPage": "前へ",
+      "nextPage": "次へ"
     }
   },
   "agents": {
@@ -306,7 +309,10 @@
     "instanceRemoveFailed": "インスタンスを削除できませんでした",
     "pathAvailable": "パス有効",
     "pathUnavailable": "パス無効",
-    "scopes": { "global": "グローバル", "project": "プロジェクト" },
+    "scopes": {
+      "global": "グローバル",
+      "project": "プロジェクト"
+    },
     "builtinDescriptions": {
       "codex": "OpenAI Codex CLI / デスクトップのセッションアダプター",
       "claude-code": "Anthropic Claude Code セッションアダプター",

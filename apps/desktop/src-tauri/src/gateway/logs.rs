@@ -115,8 +115,19 @@ pub(crate) fn list_call_logs(state: &DesktopState, input: Option<&Value>) -> Res
     let limit = input
         .and_then(|input| input.get("limit"))
         .and_then(Value::as_u64)
-        .unwrap_or(100)
+        .unwrap_or(50)
         .clamp(1, MAX_QUERY_ROWS);
+    let offset = input
+        .and_then(|input| input.get("offset"))
+        .and_then(Value::as_u64)
+        .unwrap_or(0);
+    let page = input
+        .and_then(|input| input.get("page"))
+        .and_then(Value::as_u64)
+        .filter(|value| *value > 0);
+    let offset = page
+        .map(|page| (page - 1).saturating_mul(limit))
+        .unwrap_or(offset);
     let mut conditions = Vec::new();
     let mut values = Vec::<SqlValue>::new();
     if let Some(before) = input
@@ -139,21 +150,31 @@ pub(crate) fn list_call_logs(state: &DesktopState, input: Option<&Value>) -> Res
         let search = format!("%{search}%");
         values.extend((0..4).map(|_| SqlValue::Text(search.clone())));
     }
-    values.push((limit as i64).into());
     let where_clause = if conditions.is_empty() {
         String::new()
     } else {
         format!(" WHERE {}", conditions.join(" AND "))
     };
-    let sql = format!(
-        "SELECT id,request_id,started_at_ms,finished_at_ms,status,http_status,streaming,client_protocol,upstream_protocol,requested_model,upstream_model,provider_id,provider_name,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,total_tokens,first_token_ms,duration_ms,error FROM gateway_call_logs{where_clause} ORDER BY started_at_ms DESC LIMIT ?"
-    );
     let connection = Connection::open(&state.store_path).map_err(|error| error.to_string())?;
+    let count_sql = format!("SELECT COUNT(*) FROM gateway_call_logs{where_clause}");
+    let total = connection
+        .query_row(
+            &count_sql,
+            params_from_iter(values.iter()),
+            |row| row.get::<_, i64>(0),
+        )
+        .map_err(|error| error.to_string())? as u64;
+    let mut query_values = values;
+    query_values.push((limit as i64).into());
+    query_values.push((offset as i64).into());
+    let sql = format!(
+        "SELECT id,request_id,started_at_ms,finished_at_ms,status,http_status,streaming,client_protocol,upstream_protocol,requested_model,upstream_model,provider_id,provider_name,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,total_tokens,first_token_ms,duration_ms,error FROM gateway_call_logs{where_clause} ORDER BY started_at_ms DESC LIMIT ? OFFSET ?"
+    );
     let mut statement = connection
         .prepare(&sql)
         .map_err(|error| error.to_string())?;
     let logs = statement
-        .query_map(params_from_iter(values), |row| {
+        .query_map(params_from_iter(query_values), |row| {
             Ok(json!({
                 "id": row.get::<_, String>(0)?,
                 "requestId": row.get::<_, String>(1)?,
@@ -181,9 +202,16 @@ pub(crate) fn list_call_logs(state: &DesktopState, input: Option<&Value>) -> Res
         .map_err(|error| error.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|error| error.to_string())?;
-    Ok(Value::Array(logs))
+    let has_more = offset.saturating_add(logs.len() as u64) < total;
+    Ok(json!({
+        "items": logs,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "page": if limit == 0 { 1 } else { offset / limit + 1 },
+        "hasMore": has_more,
+    }))
 }
-
 pub(crate) fn clear_call_logs(state: &DesktopState) -> Result<Value, String> {
     let connection = Connection::open(&state.store_path).map_err(|error| error.to_string())?;
     let count = connection
@@ -309,11 +337,13 @@ mod tests {
             error: None,
         });
         let logs = list_call_logs(&state, Some(&json!({ "status": "succeeded" }))).unwrap();
-        assert_eq!(logs[0]["requestedModel"], "alias");
-        assert_eq!(logs[0]["inputTokens"], 4);
-        assert!(logs[0].get("requestBody").is_none());
+        assert_eq!(logs["items"][0]["requestedModel"], "alias");
+        assert_eq!(logs["items"][0]["inputTokens"], 4);
+        assert!(logs["items"][0].get("requestBody").is_none());
         assert_eq!(clear_call_logs(&state).unwrap(), 1);
-        assert_eq!(list_call_logs(&state, None).unwrap(), json!([]));
+        let empty = list_call_logs(&state, None).unwrap();
+        assert_eq!(empty["items"], json!([]));
+        assert_eq!(empty["total"], 0);
         drop(state);
         let _ = std::fs::remove_dir_all(root);
     }

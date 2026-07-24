@@ -100,10 +100,21 @@ export interface GatewayCallLog {
 
 export interface GatewayCallLogQuery {
   limit?: number;
+  offset?: number;
+  page?: number;
   before?: number;
   status?: GatewayCallStatus | "all";
   providerId?: string;
   search?: string;
+}
+
+export interface GatewayCallLogPage {
+  items: GatewayCallLog[];
+  total: number;
+  limit: number;
+  offset: number;
+  page: number;
+  hasMore: boolean;
 }
 
 export interface GatewayAPI {
@@ -130,6 +141,6 @@ export interface GatewayAPI {
     updates: Partial<GatewayRouteInput>,
   ): Promise<GatewayRoute>;
   removeRoute(id: string): Promise<boolean>;
-  listCallLogs(query?: GatewayCallLogQuery): Promise<GatewayCallLog[]>;
+  listCallLogs(query?: GatewayCallLogQuery): Promise<GatewayCallLogPage>;
   clearCallLogs(): Promise<number>;
 }

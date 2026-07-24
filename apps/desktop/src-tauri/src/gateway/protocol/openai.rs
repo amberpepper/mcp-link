@@ -334,7 +334,17 @@ pub(super) fn openai_chat_response_to_responses(value: &Value) -> Value {
         .unwrap_or(&Value::Null);
     let message = choice.get("message").unwrap_or(&Value::Null);
     let mut output = Vec::new();
-    let text = portable_gateway_text(message.get("content").unwrap_or(&Value::Null));
+    let mut text = portable_gateway_text(message.get("content").unwrap_or(&Value::Null));
+    if text.is_empty() {
+        // Some chat proxies only fill reasoning_* when content is null/empty.
+        for key in ["text", "reasoning_content", "reasoning"] {
+            let candidate = portable_gateway_text(message.get(key).unwrap_or(&Value::Null));
+            if !candidate.is_empty() {
+                text = candidate;
+                break;
+            }
+        }
+    }
     if !text.is_empty() {
         output.push(json!({
             "id": "msg_mcp_link",

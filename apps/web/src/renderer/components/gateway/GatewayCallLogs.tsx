@@ -44,7 +44,7 @@ import { toast } from "sonner";
 
 import { usePlatformAPI } from "@/renderer/platform-api";
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 50;
 
 export function GatewayCallLogs({
   providers,
@@ -57,8 +57,9 @@ export function GatewayCallLogs({
   const logsRef = useRef<GatewayCallLog[]>([]);
   const [logs, setLogs] = useState<GatewayCallLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
   const [status, setStatus] = useState<GatewayCallStatus | "all">("all");
   const [providerId, setProviderId] = useState("all");
   const [search, setSearch] = useState("");
@@ -76,28 +77,27 @@ export function GatewayCallLogs({
   }, [search]);
 
   const load = useCallback(
-    async (append = false, silent = false) => {
+    async (targetPage: number, silent = false) => {
       const request = requestRef.current + 1;
       requestRef.current = request;
-      if (!silent) {
-        if (append) setLoadingMore(true);
-        else setLoading(true);
-      }
+      if (!silent) setLoading(true);
       try {
-        const next = await platformAPI.gateway.listCallLogs({
+        const result = await platformAPI.gateway.listCallLogs({
           limit: PAGE_SIZE,
-          before: append ? logsRef.current.at(-1)?.startedAt : undefined,
+          page: targetPage,
           status,
           providerId: providerId === "all" ? undefined : providerId,
           search: debouncedSearch || undefined,
         });
         if (requestRef.current !== request) return;
-        setLogs((current) => {
-          const result = append ? [...current, ...next] : next;
-          logsRef.current = result;
-          return result;
-        });
-        setHasMore(next.length === PAGE_SIZE);
+        const items = result.items ?? [];
+        logsRef.current = items;
+        setLogs(items);
+        setTotal(result.total ?? 0);
+        setPage(result.page ?? targetPage);
+        setPageCount(
+          Math.max(1, Math.ceil((result.total ?? 0) / (result.limit || PAGE_SIZE))),
+        );
       } catch (error) {
         if (!silent) {
           toast.error(
@@ -107,20 +107,21 @@ export function GatewayCallLogs({
           );
         }
       } finally {
-        if (requestRef.current === request) {
-          setLoading(false);
-          setLoadingMore(false);
-        }
+        if (requestRef.current === request) setLoading(false);
       }
     },
     [debouncedSearch, platformAPI, providerId, status, t],
   );
 
   useEffect(() => {
-    void load(false);
-    const timer = window.setInterval(() => void load(false, true), 5_000);
+    setPage(1);
+  }, [debouncedSearch, providerId, status]);
+
+  useEffect(() => {
+    void load(page);
+    const timer = window.setInterval(() => void load(page, true), 5_000);
     return () => window.clearInterval(timer);
-  }, [load]);
+  }, [load, page]);
 
   const totals = useMemo(
     () =>
@@ -142,7 +143,9 @@ export function GatewayCallLogs({
       setClearOpen(false);
       logsRef.current = [];
       setLogs([]);
-      setHasMore(false);
+      setTotal(0);
+      setPage(1);
+      setPageCount(1);
       toast.success(t("gateway.logs.cleared"));
     } catch (error) {
       toast.error(
@@ -171,7 +174,7 @@ export function GatewayCallLogs({
                 variant="outline"
                 size="icon"
                 aria-label={t("common.refresh")}
-                onClick={() => void load(false)}
+                onClick={() => void load(page)}
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
@@ -231,7 +234,7 @@ export function GatewayCallLogs({
             </Select>
           </div>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <span>{t("gateway.logs.callCount", { count: totals.calls })}</span>
+            <span>{t("gateway.logs.callCount", { count: total })}</span>
             <span>
               {t("gateway.logs.tokenCount", { count: totals.tokens })}
             </span>
@@ -319,17 +322,37 @@ export function GatewayCallLogs({
                   ))}
                 </tbody>
               </table>
-              {hasMore && (
-                <div className="flex justify-center pt-4">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  {t("gateway.logs.pageInfo", {
+                    page,
+                    pageCount,
+                    total,
+                    from: total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1,
+                    to: Math.min(page * PAGE_SIZE, total),
+                  })}
+                </p>
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
-                    disabled={loadingMore}
-                    onClick={() => void load(true)}
+                    size="sm"
+                    disabled={loading || page <= 1}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    {t("gateway.logs.loadMore")}
+                    {t("gateway.logs.prevPage")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={loading || page >= pageCount}
+                    onClick={() =>
+                      setPage((current) => Math.min(pageCount, current + 1))
+                    }
+                  >
+                    {t("gateway.logs.nextPage")}
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </CardContent>
